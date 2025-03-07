@@ -1,0 +1,7 @@
+{
+  "name": "crossCountry",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
