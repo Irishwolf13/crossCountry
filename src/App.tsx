@@ -1,9 +1,13 @@
 // App.tsx
-import { Redirect, Route } from 'react-router-dom';
+import React from 'react';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { Redirect, Route } from 'react-router-dom';
 import Home from './pages/Home/Home';
+import Dashboard from './pages/Dashboard/Dashboard';
 import Login from './pages/Login/Login';
+import { AuthProvider } from './firebase/AuthContext';
+import PrivateRoute from './firebase/PrivateRoute';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -30,19 +34,16 @@ setupIonicReact();
 
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        <Route exact path="/login">
-          <Login />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
+    <AuthProvider>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <PrivateRoute exact path="/dashboard" component={Dashboard} />
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/home" component={Home} />
+          <Route exact path="/" component={Home} />
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </AuthProvider>
   </IonApp>
 );
 

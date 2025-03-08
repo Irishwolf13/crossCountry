@@ -1,8 +1,8 @@
 import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import './Home.css';
+import './Dashboard.css';
 
-const Home: React.FC = () => {
+const Dashboard: React.FC = () => {
   const history = useHistory();
 
   const handleLogin = () => {
@@ -14,13 +14,13 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Home</IonTitle>
+          <IonTitle>Dashboard</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Home</IonTitle>
+            <IonTitle size="large">Dashboard</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonButton onClick={handleLogin}>Admin Login</IonButton>
@@ -29,4 +29,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default Dashboard;

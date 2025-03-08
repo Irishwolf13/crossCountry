@@ -27,7 +27,7 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      history.push('/home');
+      history.push('/dashboard');
     } catch (error) {
       console.error('Error logging in:', error);
     }
