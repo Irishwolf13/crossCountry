@@ -1,13 +1,15 @@
+import React from 'react';
 import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './Dashboard.css';
+import { useAuth } from '../../firebase/AuthContext';
+import { auth } from '../../firebase/config';
 
 const Dashboard: React.FC = () => {
-  const history = useHistory();
+  const { user } = useAuth(); // Access the current user from the AuthContext
 
-  const handleLogin = () => {
-    // alert('Login');
-    history.push('/Login');
+  const handleLogOut = () => {
+    auth.signOut(); // Sign out from Firebase
   };
 
   return (
@@ -23,7 +25,15 @@ const Dashboard: React.FC = () => {
             <IonTitle size="large">Dashboard</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonButton onClick={handleLogin}>Admin Login</IonButton>
+        
+        {/* Display the username if the user is authenticated */}
+        {user ? (
+          <p>{user.email || 'User'}</p>
+        ) : (
+          <p>Please log in to see your username.</p>
+        )}
+
+        <IonButton onClick={handleLogOut}>Admin LogOut</IonButton>
       </IonContent>
     </IonPage>
   );

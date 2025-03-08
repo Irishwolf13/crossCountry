@@ -1,6 +1,7 @@
 // firebaseController.ts
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion } from "firebase/firestore";
-import { db } from "./config";
+import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
+import { db, storage } from "./config";
 import { UserInfo } from "./types";
 
 // Create a new document
@@ -57,3 +58,18 @@ export const createDocument = async (collectionName: string, documentId: string,
       }
     });
   };
+
+  // ********************* IMAGES ********************* 
+////////////////////////////////////////// IMAGE UPLOAD FUNCTION //////////////////////////////////////////
+export const uploadImage = async (file: File): Promise<string | null> => {
+  try {
+    const storageRef = ref(storage, `images/${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log("Image successfully uploaded, URL: ", downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading image: ", error);
+    throw new Error("Could not upload image");
+  }
+};

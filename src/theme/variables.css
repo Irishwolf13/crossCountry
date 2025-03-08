@@ -1,2 +1,35 @@
 /* For information on how to create your own theme, please see:
 http://ionicframework.com/docs/theming/ */
+
+/* ************************ TOASTS ************************ */
+ion-toast.toastFail {
+  --background: #ff2626;
+  --box-shadow: 3px 3px 10px 0 rgba(0, 0, 0, 0.2);
+  --color: #ffffff;
+}
+
+ion-toast.toastFail::part(message) {
+  font-style: bold;
+}
+
+ion-toast.toastFail::part(button) {
+  border-left: 1px solid #000000;
+  color: #ffffff;
+}
+
+ion-toast.toastSuccess {
+  --background: #15ff00;
+  --box-shadow: 3px 3px 10px 0 rgba(0, 0, 0, 0.2);
+  --color: #000000;
+}
+
+ion-toast.toastSuccess::part(message) {
+  font-style: bold;
+}
+
+ion-toast.toastSuccess::part(button) {
+  border-left: 1px solid #000000;
+  color: #000000;
+}
+
+/* ************************ TITLE ************************ */

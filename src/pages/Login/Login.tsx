@@ -40,7 +40,7 @@ const Login: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton />
           </IonButtons>
-          <IonTitle>Login</IonTitle>
+          <IonTitle>Admin Login</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -58,7 +58,7 @@ const Login: React.FC = () => {
           type="password"
           required
         />
-        <IonButton onClick={handleLogin}>Login</IonButton>
+        <IonButton onClick={handleLogin}>Admin Login</IonButton>
       </IonContent>
     </IonPage>
   );
