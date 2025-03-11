@@ -3,16 +3,24 @@ import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion } fro
 import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 import { db, storage } from "./config";
 import { UserInfo } from "./types";
+import { v4 as uuidv4 } from 'uuid';
 
 // Create a new document
-export const createDocument = async (collectionName: string, documentId: string, data: UserInfo) => {
-    try {
-      await setDoc(doc(db, collectionName, documentId), data);
-      console.log("Document successfully written!");
-    } catch (e) {
-      console.error("Error writing document: ", e);
-    }
-  };
+export const createDocument = async (collectionName: string, data: UserInfo) => {
+  const documentId = uuidv4();
+  const timestamp = new Date();
+
+  try {
+    await setDoc(doc(db, collectionName, documentId), {
+      ...data,
+      createdAt: timestamp.toISOString(),
+      documentId: documentId
+    });
+    console.log("Document successfully written with timestamp!");
+  } catch (e) {
+    console.error("Error writing document: ", e);
+  }
+};
   
   // Read a document
   export const readDocument = async (collectionName: string, documentId: string) => {

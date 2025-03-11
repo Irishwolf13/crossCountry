@@ -1,5 +1,6 @@
 export interface UserInfo {
-    uid: string;
-    email: string;
-    userName: string;
+      fileName: string;
+      latitude: string | number;
+      longitude: string | number;
+      html: string;
   }

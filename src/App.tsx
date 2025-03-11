@@ -6,6 +6,7 @@ import { Redirect, Route } from 'react-router-dom';
 import Home from './pages/Home/Home';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Login from './pages/Login/Login';
+import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
 import { AuthProvider } from './firebase/AuthContext';
 import PrivateRoute from './firebase/PrivateRoute';
 
@@ -40,6 +41,7 @@ const App: React.FC = () => (
           <PrivateRoute exact path="/dashboard" component={Dashboard} />
           <Route exact path="/login" component={Login} />
           <Route exact path="/home" component={Home} />
+          <Route exact path="/uploadPhoto" component={UploadPhoto} />
           <Route exact path="/" component={Home} />
         </IonRouterOutlet>
       </IonReactRouter>
