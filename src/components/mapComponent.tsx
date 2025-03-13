@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase/config';
-import { collection, addDoc, getDocs, orderBy, query,} from 'firebase/firestore';
+import { collection, addDoc, getDocs, orderBy, query, } from 'firebase/firestore';
+import { IonButton } from '@ionic/react';
 
 declare global { interface Window { initMap: () => void; }}
 
@@ -8,6 +9,7 @@ const MapWithDirections: React.FC = () => {
   const [waypoints, setWaypoints] = useState<{ location: string; stopover: boolean }[]>([]);
   const [newWaypoint, setNewWaypoint] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
 
   useEffect(() => {
     const fetchWaypointsFromDB = async () => {
@@ -18,6 +20,7 @@ const MapWithDirections: React.FC = () => {
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          console.log(doc.id)
           loadedWaypoints.push({
             location: data.address,
             stopover: true,
@@ -35,36 +38,110 @@ const MapWithDirections: React.FC = () => {
 
   useEffect(() => {
     const initMapAndAutocomplete = () => {
-      const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
-        zoom: 6,
-        center: { lat: 41.850033, lng: -87.6500523 },
-      });
-
+      const newMap = new window.google.maps.Map(
+        document.getElementById('map') as HTMLElement,
+        {
+          zoom: 6,
+          center: { lat: 41.850033, lng: -87.6500523 },
+        }
+      );
+      setMap(newMap);
+  
       const directionsService = new window.google.maps.DirectionsService();
       const directionsRenderer = new window.google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
-
+      directionsRenderer.setMap(newMap);
+  
+      const origin = 'Rochester, NY';
+      const destination = 'Seattle, WA';
+  
       if (waypoints.length > 0) {
         const request: google.maps.DirectionsRequest = {
-          origin: 'Rochester, NY',
-          destination: 'Seattle, WA',
+          origin: origin,
+          destination: destination,
           travelMode: google.maps.TravelMode.DRIVING,
           waypoints: waypoints,
         };
-
+  
         directionsService.route(request, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK && result) {
+            console.log(result);
             directionsRenderer.setDirections(result);
+  
+            // Marker for origin with alert
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address: origin }, (results, status) => {
+              if (status === 'OK' && results && results[0]) {
+                const originMarker = new window.google.maps.Marker({
+                  position: results[0].geometry.location,
+                  map: newMap,
+                  title: 'Origin',
+                  label: 'A', // Label for origin
+                });
+  
+                originMarker.addListener('click', () => {
+                  alert(`Origin Location: ${origin}`);
+                });
+              } else {
+                console.error('Geocoding failed for origin:', status);
+              }
+            });
+  
+            // Markers for waypoints
+            waypoints.forEach((waypoint, index) => {
+              geocoder.geocode(
+                { address: waypoint.location },
+                (results, status) => {
+                  if (status === 'OK' && results && results[0]) {
+                    const marker = new window.google.maps.Marker({
+                      position: results[0].geometry.location,
+                      map: newMap,
+                      title: `Waypoint ${index + 1}`,
+                      label: String.fromCharCode(65 + index + 1), // Convert 0, 1, 2... to A, B, C...
+                    });
+  
+                    // Add click listener to the marker
+                    marker.addListener('click', () => {
+                      alert(`Waypoint Location: ${waypoint.location}`);
+                    });
+                  } else {
+                    console.error('Geocoding failed:', status);
+                  }
+                }
+              );
+            });
+  
+            // Marker for destination with alert
+            geocoder.geocode({ address: destination }, (results, status) => {
+              if (status === 'OK' && results && results[0]) {
+                const destinationMarker = new window.google.maps.Marker({
+                  position: results[0].geometry.location,
+                  map: newMap,
+                  title: 'Destination',
+                  label: 'End', // Label for destination
+                });
+  
+                destinationMarker.addListener('click', () => {
+                  alert(`Destination Location: ${destination}`);
+                });
+              } else {
+                console.error('Geocoding failed for destination:', status);
+              }
+            });
           } else {
-            console.error('Directions request failed due to ' + status);
+            console.error('Directions request failed due to ', status);
           }
         });
       }
-
-      const autocompleteInput = document.getElementById('autocomplete-input') as HTMLInputElement;
-      const autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteInput);
+  
+      // Initialize autocomplete
+      const autocompleteInput = document.getElementById(
+        'autocomplete-input'
+      ) as HTMLInputElement;
+      const autocompleteInstance = new window.google.maps.places.Autocomplete(
+        autocompleteInput
+      );
       setAutocomplete(autocompleteInstance);
-
+  
       autocompleteInstance.addListener('place_changed', () => {
         const place = autocompleteInstance.getPlace();
         if (place.formatted_address) {
@@ -72,7 +149,7 @@ const MapWithDirections: React.FC = () => {
         }
       });
     };
-
+  
     const loadGoogleMapsScript = () => {
       const existingScript = document.getElementById('google-maps');
       if (!existingScript) {
@@ -89,11 +166,10 @@ const MapWithDirections: React.FC = () => {
         }
       }
     };
-
+  
     loadGoogleMapsScript();
-
   }, [waypoints]);
-
+  
   const isLocationInUSA = (results:any) => {
     if (!results || results.length === 0) return false;
   
@@ -182,10 +258,10 @@ const MapWithDirections: React.FC = () => {
     }
   };
   
-
   return (
     <div>
-      <h3>Directions from Buffalo to Seattle with waypoints</h3>
+      <h3>Title</h3>
+      <div id="map" style={{ height: '500px', width: '100%' }}></div>
       <div>
         <input
           id="autocomplete-input"
@@ -194,10 +270,9 @@ const MapWithDirections: React.FC = () => {
           onChange={(e) => setNewWaypoint(e.target.value)}
           placeholder="Enter waypoint"
         />
-        <button onClick={handleAddWaypoint}>Add Waypoint</button>
-        <button onClick={handleAddCurrentLocation}>Add Current Location</button>
+        <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
+        <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
       </div>
-      <div id="map" style={{ height: '500px', width: '100%' }}></div>
     </div>
   );
 }

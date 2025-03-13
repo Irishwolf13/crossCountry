@@ -17,7 +17,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <IonPage>
+    <IonPage className='ion-padding-start ion-padding-end'>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Home</IonTitle>
