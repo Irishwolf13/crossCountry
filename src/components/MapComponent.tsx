@@ -8,24 +8,33 @@ declare global {
 }
 
 const MapWithDirections: React.FC = () => {
-  const [waypoints, setWaypoints] = useState<{ location: string; stopover: boolean }[]>([]);
+  const [waypoints, setWaypoints] = useState<{ location: string; stopover: boolean; id: string }[]>([]);
   const [newWaypoint, setNewWaypoint] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLocation, setModalLocation] = useState('');
+  const [modalImages, setModalImages] = useState<string[]>([]);
 
+    // Clean up images when the modal is closed
+    useEffect(() => {
+      if (!modalOpen) {
+        setModalImages([]);
+      }
+    }, [modalOpen]);
+  
   useEffect(() => {
     const fetchWaypointsFromDB = async () => {
       try {
         const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
         const querySnapshot = await getDocs(q);
-        const loadedWaypoints: { location: string; stopover: boolean }[] = [];
+        const loadedWaypoints: { location: string; stopover: boolean; id: string }[] = [];
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           loadedWaypoints.push({
             location: data.address,
             stopover: true,
+            id: doc.id, // Save document ID for fetching images later
           });
         });
 
@@ -44,78 +53,69 @@ const MapWithDirections: React.FC = () => {
         zoom: 6,
         center: { lat: 41.850033, lng: -87.6500523 },
       });
-    
+  
       const directionsService = new window.google.maps.DirectionsService();
       const directionsRenderer = new window.google.maps.DirectionsRenderer({
         suppressMarkers: true // Suppresses default markers.
       });
       directionsRenderer.setMap(map);
-    
-      const origin = 'Rochester Institute of Technology';
-      const destination = 'Seattle, WA';
-    
-      // Create custom marker for the origin
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ address: origin }, (results, status) => {
-        if (status === 'OK' && results ) {
-          const originMarker = new window.google.maps.Marker({
-            position: results[0].geometry.location,
-            map: map,
-            title: origin
-          });
-    
-          // Add a click listener to open the modal
-          originMarker.addListener('click', () => {
-            setModalLocation(origin);
-            setModalOpen(true);
-          });
-        }
-      });
-    
-      // Create custom marker for the destination
-      geocoder.geocode({ address: destination }, (results, status) => {
-        if (status === 'OK' && results ) {
-          const destinationMarker = new window.google.maps.Marker({
-            position: results[0].geometry.location,
-            map: map,
-            title: destination
-          });
-    
-          // Add a click listener to open the modal
-          destinationMarker.addListener('click', () => {
-            setModalLocation(destination);
-            setModalOpen(true);
-          });
-        }
-      });
-    
+  
       if (waypoints.length > 0) {
-        // Loop through the waypoints and create markers
-        waypoints.forEach((waypoint) => {
-          geocoder.geocode({ address: waypoint.location }, (results, status) => {
-            if (status === 'OK' && results ) {
-              const waypointMarker = new window.google.maps.Marker({
+        const origin = waypoints[0]?.location || '';
+        const destination = waypoints[waypoints.length - 1]?.location || '';
+  
+        const geocoder = new window.google.maps.Geocoder();
+  
+        const setMarkerWithImages = (location:any, map:any, title:any) => {
+          geocoder.geocode({ address: location }, async (results, status) => {
+            if (status === 'OK' && results) {
+              const marker = new window.google.maps.Marker({
                 position: results[0].geometry.location,
                 map: map,
-                title: waypoint.location
+                title: title
               });
-    
-              // Add a click listener to open the modal
-              waypointMarker.addListener('click', () => {
-                setModalLocation(waypoint.location);
+  
+              marker.addListener('click', async () => {
+                setModalLocation(title);
                 setModalOpen(true);
+  
+                try {
+                  const docRef = collection(db, 'myWaypoints');
+                  const waypointDoc = await getDocs(query(docRef));
+                  const selectedWaypoint = waypointDoc.docs.find((doc) => doc.data().address === title);
+                  if (selectedWaypoint) {
+                    const data = selectedWaypoint.data();
+                    setModalImages(data.images || []);
+                  } else {
+                    setModalImages([]);
+                  }
+                } catch (error) {
+                  console.error('Error fetching images: ', error);
+                  setModalImages([]);
+                }
               });
             }
           });
+        };
+  
+        // Set markers for origin, destination and waypoints
+        setMarkerWithImages(origin, map, origin);
+        setMarkerWithImages(destination, map, destination);
+  
+        const waypointsForMarkers = waypoints.slice(1, waypoints.length - 1);
+        waypointsForMarkers.forEach(({ location }) => {
+          setMarkerWithImages(location, map, location);
         });
-    
+  
+        const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
+  
         const request: google.maps.DirectionsRequest = {
           origin: origin,
           destination: destination,
           travelMode: google.maps.TravelMode.DRIVING,
-          waypoints: waypoints,
+          waypoints: waypointsForDirections,
         };
-    
+  
         directionsService.route(request, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK && result) {
             directionsRenderer.setDirections(result);
@@ -124,11 +124,11 @@ const MapWithDirections: React.FC = () => {
           }
         });
       }
-    
+  
       const autocompleteInput = document.getElementById('autocomplete-input') as HTMLInputElement;
       const autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteInput);
       setAutocomplete(autocompleteInstance);
-    
+  
       autocompleteInstance.addListener('place_changed', () => {
         const place = autocompleteInstance.getPlace();
         if (place.formatted_address) {
@@ -136,8 +136,7 @@ const MapWithDirections: React.FC = () => {
         }
       });
     };
-    
-
+  
     const loadGoogleMapsScript = () => {
       const existingScript = document.getElementById('google-maps');
       if (!existingScript) {
@@ -154,14 +153,14 @@ const MapWithDirections: React.FC = () => {
         }
       }
     };
-
+  
     loadGoogleMapsScript();
-
+  
   }, [waypoints]);
 
-  const isLocationInUSA = (results:any) => {
+  const isLocationInUSA = (results: any) => {
     if (!results || results.length === 0) return false;
-  
+
     for (let component of results[0].address_components) {
       if (component.types.includes('country') && component.short_name === 'US') {
         return true;
@@ -172,27 +171,28 @@ const MapWithDirections: React.FC = () => {
 
   const handleAddWaypoint = async () => {
     if (newWaypoint.trim() === '') return;
-  
+
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ address: newWaypoint }, async (results, status) => {
-      if(results) {
+      if (results) {
         if (status === 'OK' && isLocationInUSA(results)) {
           try {
             const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber', 'desc'));
             const querySnapshot = await getDocs(q);
-            const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0].data().stopNumber : 0;
-    
+            const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0]?.data().stopNumber : 0;
+
             await addDoc(collection(db, 'myWaypoints'), {
               latitude: results[0].geometry.location.lat(),
               longitude: results[0].geometry.location.lng(),
               address: newWaypoint,
               stopNumber: highestStopNumber + 1,
+              images: [] // Placeholder for any new waypoint images
             });
-    
-            setWaypoints([...waypoints, { location: newWaypoint, stopover: true }]);
+
+            setWaypoints([...waypoints, { location: newWaypoint, stopover: true, id: '' }]);
             setNewWaypoint('');
             if (autocomplete) autocomplete.getPlace();
-    
+
           } catch (error) {
             console.error('Error adding waypoint: ', error);
           }
@@ -202,17 +202,16 @@ const MapWithDirections: React.FC = () => {
       }
     });
   };
-  
+
   const handleAddCurrentLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-  
-          // Use Google Maps Geocoder API to convert coordinates into a human-readable address
+
           const geocoder = new window.google.maps.Geocoder();
           const latLng = { lat: latitude, lng: longitude };
-  
+
           geocoder.geocode({ location: latLng }, async (results, status) => {
             if (status === 'OK' && results && isLocationInUSA(results)) {
               const address = results[0].formatted_address;
@@ -220,15 +219,16 @@ const MapWithDirections: React.FC = () => {
                 const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber', 'desc'));
                 const querySnapshot = await getDocs(q);
                 const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0].data().stopNumber : 0;
-  
+
                 await addDoc(collection(db, 'myWaypoints'), {
                   latitude,
                   longitude,
                   address,
                   stopNumber: highestStopNumber + 1,
+                  images: [] // Placeholder for any new location images
                 });
-  
-                setWaypoints([...waypoints, { location: address, stopover: true }]);
+
+                setWaypoints([...waypoints, { location: address, stopover: true, id: '' }]);
               } catch (error) {
                 console.error('Error adding waypoint: ', error);
               }
@@ -271,7 +271,13 @@ const MapWithDirections: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <p>frank</p>
+          {modalImages.length > 0 ? (
+            modalImages.map((imageUrl, index) => (
+              <img key={index} src={imageUrl} alt={`Waypoint ${modalLocation}`} style={{ maxWidth: '100%', marginBottom: '10px' }} />
+            ))
+          ) : (
+            <p>No images available for this location.</p>
+          )}
           <IonButton onClick={() => setModalOpen(false)}>Close</IonButton>
         </IonContent>
       </IonModal>
