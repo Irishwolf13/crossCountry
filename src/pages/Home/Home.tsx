@@ -17,7 +17,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <IonPage className='ion-padding-start ion-padding-end'>
+    <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Home</IonTitle>
@@ -29,8 +29,8 @@ const Home: React.FC = () => {
             <IonTitle size="large">Home</IonTitle>
           </IonToolbar>
         </IonHeader>
-      <IonButton onClick={goToUploadPage}>Upload Photo</IonButton>
       <MapWithDirections />
+      <IonButton onClick={goToUploadPage}>Upload Photo</IonButton>
       </IonContent>
     </IonPage>
   );

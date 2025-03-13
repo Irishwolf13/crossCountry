@@ -250,6 +250,7 @@ const MapWithDirections: React.FC = () => {
   return (
     <div>
       <h3>Directions from Buffalo to Seattle with waypoints</h3>
+      <div id="map" style={{ height: '50vh', width: '100%' }}></div>
       <div>
         <input
           id="autocomplete-input"
@@ -258,10 +259,9 @@ const MapWithDirections: React.FC = () => {
           onChange={(e) => setNewWaypoint(e.target.value)}
           placeholder="Enter waypoint"
         />
-        <button onClick={handleAddWaypoint}>Add Waypoint</button>
-        <button onClick={handleAddCurrentLocation}>Add Current Location</button>
+        <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
+        <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
       </div>
-      <div id="map" style={{ height: '500px', width: '100%' }}></div>
 
       {/* Modal Implementation */}
       <IonModal isOpen={modalOpen} className='my-custom-class'>
