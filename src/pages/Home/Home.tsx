@@ -3,7 +3,7 @@ import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from 
 import { useHistory } from 'react-router-dom';
 import './Home.css';
 import '../../theme/variables.css'
-import MapWithDirections from '../../components/mapComponent';
+import MapWithDirections from '../../components/MapComponent';
 
 const Home: React.FC = () => {
   const history = useHistory();
