@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { IonModal, IonContent, IonHeader, IonToolbar, IonTitle, IonButton } from '@ionic/react';
-import { db } from '../firebase/config';
-import { collection, addDoc, getDocs, orderBy, query } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
+import { collection, addDoc, getDocs, orderBy, query, onSnapshot } from 'firebase/firestore';
 
 declare global {
   interface Window { initMap: () => void; }
@@ -14,59 +14,66 @@ const MapWithDirections: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLocation, setModalLocation] = useState('');
   const [modalImages, setModalImages] = useState<string[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // Clean up images when the modal is closed
-    useEffect(() => {
-      if (!modalOpen) {
-        setModalImages([]);
-      }
-    }, [modalOpen]);
-  
   useEffect(() => {
-    const fetchWaypointsFromDB = async () => {
-      try {
-        const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
-        const querySnapshot = await getDocs(q);
-        const loadedWaypoints: { location: string; stopover: boolean; id: string }[] = [];
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      setIsLoggedIn(!!user);
+    });
 
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          loadedWaypoints.push({
-            location: data.address,
-            stopover: true,
-            id: doc.id, // Save document ID for fetching images later
-          });
-        });
-
-        setWaypoints(loadedWaypoints);
-      } catch (error) {
-        console.error('Error fetching waypoints: ', error);
-      }
-    };
-
-    fetchWaypointsFromDB();
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    const initMapAndAutocomplete = () => {
+    if (!modalOpen) {
+      setModalImages([]);
+    }
+  }, [modalOpen]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
+
+    // Real-time listener for waypoints
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const loadedWaypoints: { location: string; stopover: boolean; id: string }[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        loadedWaypoints.push({
+          location: data.address,
+          stopover: true,
+          id: doc.id,
+        });
+      });
+
+      setWaypoints(loadedWaypoints);
+    }, (error) => {
+      console.error('Error listening to waypoints: ', error);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const initMap = () => {
       const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
         zoom: 6,
         center: { lat: 41.850033, lng: -87.6500523 },
       });
-  
+
       const directionsService = new window.google.maps.DirectionsService();
       const directionsRenderer = new window.google.maps.DirectionsRenderer({
-        suppressMarkers: true // Suppresses default markers.
+        suppressMarkers: true
       });
       directionsRenderer.setMap(map);
-  
+
       if (waypoints.length > 0) {
         const origin = waypoints[0]?.location || '';
         const destination = waypoints[waypoints.length - 1]?.location || '';
-  
+
         const geocoder = new window.google.maps.Geocoder();
-  
-        const setMarkerWithImages = (location:any, map:any, title:any) => {
+
+        const setMarkerWithImages = (location: any, map: any, title: any) => {
           geocoder.geocode({ address: location }, async (results, status) => {
             if (status === 'OK' && results) {
               const marker = new window.google.maps.Marker({
@@ -74,11 +81,11 @@ const MapWithDirections: React.FC = () => {
                 map: map,
                 title: title
               });
-  
+
               marker.addListener('click', async () => {
                 setModalLocation(title);
                 setModalOpen(true);
-  
+
                 try {
                   const docRef = collection(db, 'myWaypoints');
                   const waypointDoc = await getDocs(query(docRef));
@@ -97,25 +104,24 @@ const MapWithDirections: React.FC = () => {
             }
           });
         };
-  
-        // Set markers for origin, destination and waypoints
+
         setMarkerWithImages(origin, map, origin);
         setMarkerWithImages(destination, map, destination);
-  
+
         const waypointsForMarkers = waypoints.slice(1, waypoints.length - 1);
         waypointsForMarkers.forEach(({ location }) => {
           setMarkerWithImages(location, map, location);
         });
-  
+
         const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
-  
+
         const request: google.maps.DirectionsRequest = {
           origin: origin,
           destination: destination,
           travelMode: google.maps.TravelMode.DRIVING,
           waypoints: waypointsForDirections,
         };
-  
+
         directionsService.route(request, (result, status) => {
           if (status === google.maps.DirectionsStatus.OK && result) {
             directionsRenderer.setDirections(result);
@@ -124,19 +130,25 @@ const MapWithDirections: React.FC = () => {
           }
         });
       }
-  
-      const autocompleteInput = document.getElementById('autocomplete-input') as HTMLInputElement;
-      const autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteInput);
-      setAutocomplete(autocompleteInstance);
-  
-      autocompleteInstance.addListener('place_changed', () => {
-        const place = autocompleteInstance.getPlace();
-        if (place.formatted_address) {
-          setNewWaypoint(place.formatted_address);
-        }
-      });
     };
-  
+
+    const initAutocomplete = () => {
+      const autocompleteInput = document.getElementById('autocomplete-input') as HTMLInputElement;
+      if (autocompleteInput) {
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteInput);
+        setAutocomplete(autocompleteInstance);
+    
+        autocompleteInstance.addListener('place_changed', () => {
+          const place = autocompleteInstance.getPlace();
+          if (place.formatted_address) {
+            setNewWaypoint(place.formatted_address);
+          }
+        });
+      } else {
+        console.warn("Autocomplete input element is not available.");
+      }
+    };
+    
     const loadGoogleMapsScript = () => {
       const existingScript = document.getElementById('google-maps');
       if (!existingScript) {
@@ -146,16 +158,20 @@ const MapWithDirections: React.FC = () => {
         script.id = 'google-maps';
         script.async = true;
         document.body.appendChild(script);
-        window.initMap = initMapAndAutocomplete;
+        window.initMap = () => {
+          initMap();
+          initAutocomplete();
+        };
       } else {
         if (window.google && window.google.maps) {
-          initMapAndAutocomplete();
+          initMap();
+          initAutocomplete();
         }
       }
     };
-  
+
     loadGoogleMapsScript();
-  
+
   }, [waypoints]);
 
   const isLocationInUSA = (results: any) => {
@@ -247,42 +263,45 @@ const MapWithDirections: React.FC = () => {
     }
   };
 
-  return (
-    <div>
-      <h3>Directions from Buffalo to Seattle with waypoints</h3>
-      <div id="map" style={{ height: '50vh', width: '100%' }}></div>
-      <div>
+return (
+  <>
+    <div id="map" style={{ width: '100%', height: '500px' }}></div>
+
+    {isLoggedIn && (
+      <>
         <input
           id="autocomplete-input"
           type="text"
+          placeholder="Enter a location"
           value={newWaypoint}
           onChange={(e) => setNewWaypoint(e.target.value)}
-          placeholder="Enter waypoint"
         />
         <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
         <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
-      </div>
+      </>
+    )}
 
-      {/* Modal Implementation */}
-      <IonModal isOpen={modalOpen} className='my-custom-class'>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>{modalLocation}</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <IonContent className="ion-padding">
-          {modalImages.length > 0 ? (
-            modalImages.map((imageUrl, index) => (
-              <img key={index} src={imageUrl} alt={`Waypoint ${modalLocation}`} style={{ maxWidth: '100%', marginBottom: '10px' }} />
-            ))
-          ) : (
-            <p>No images available for this location.</p>
-          )}
-          <IonButton onClick={() => setModalOpen(false)}>Close</IonButton>
-        </IonContent>
-      </IonModal>
-    </div>
-  );
+    <IonModal isOpen={modalOpen} onDidDismiss={() => setModalOpen(false)}>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{modalLocation}</IonTitle>
+          <IonButton slot="end" onClick={() => setModalOpen(false)}>Close</IonButton>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>
+        {modalImages.length > 0 ? (
+          <div style={{ textAlign: 'center' }}>
+            {modalImages.map((image, index) => (
+              <img key={index} src={image} alt={`Location Image ${index + 1}`} style={{ maxWidth: '100%' }} />
+            ))}
+          </div>
+        ) : (
+          <p>No images available for this location.</p>
+        )}
+      </IonContent>
+    </IonModal>
+  </>
+);
 };
 
 export default MapWithDirections;

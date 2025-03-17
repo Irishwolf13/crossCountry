@@ -16,6 +16,10 @@ const Home: React.FC = () => {
     history.push('/uploadPhoto');
   };
 
+  const goToLoginPage = () => {
+    history.push('/dashboard');
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -31,6 +35,7 @@ const Home: React.FC = () => {
         </IonHeader>
       <MapWithDirections />
       <IonButton onClick={goToUploadPage}>Upload Photo</IonButton>
+      <IonButton onClick={goToLoginPage}>Admin Page</IonButton>
       </IonContent>
     </IonPage>
   );
