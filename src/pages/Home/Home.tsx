@@ -12,9 +12,9 @@ const Home: React.FC = () => {
     history.push('/Login');
   };
 
-  const goToUploadPage = () => {
-    history.push('/uploadPhoto');
-  };
+  // const goToUploadPage = () => {
+  //   history.push('/uploadPhoto');
+  // };
 
   const goToLoginPage = () => {
     history.push('/dashboard');
@@ -34,7 +34,7 @@ const Home: React.FC = () => {
           </IonToolbar>
         </IonHeader>
       <MapWithDirections />
-      <IonButton onClick={goToUploadPage}>Upload Photo</IonButton>
+      {/* <IonButton onClick={goToUploadPage}>Upload Photo</IonButton> */}
       <IonButton onClick={goToLoginPage}>Admin Page</IonButton>
       </IonContent>
     </IonPage>

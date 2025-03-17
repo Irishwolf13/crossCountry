@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { IonModal, IonContent, IonHeader, IonToolbar, IonTitle, IonButton } from '@ionic/react';
+import { IonButton } from '@ionic/react';
 import { auth, db } from '../firebase/config';
 import { collection, addDoc, getDocs, orderBy, query, onSnapshot } from 'firebase/firestore';
+import LocationModal from './LocationModal';
 
 declare global {
   interface Window { initMap: () => void; }
@@ -15,6 +16,7 @@ const MapWithDirections: React.FC = () => {
   const [modalLocation, setModalLocation] = useState('');
   const [modalImages, setModalImages] = useState<string[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -73,7 +75,7 @@ const MapWithDirections: React.FC = () => {
 
         const geocoder = new window.google.maps.Geocoder();
 
-        const setMarkerWithImages = (location: any, map: any, title: any) => {
+        const setMarkerWithImages = (location: any, map: any, title: any, id: string) => {
           geocoder.geocode({ address: location }, async (results, status) => {
             if (status === 'OK' && results) {
               const marker = new window.google.maps.Marker({
@@ -84,6 +86,7 @@ const MapWithDirections: React.FC = () => {
 
               marker.addListener('click', async () => {
                 setModalLocation(title);
+                setSelectedWaypointId(id); // Set the selected waypoint ID here
                 setModalOpen(true);
 
                 try {
@@ -105,12 +108,12 @@ const MapWithDirections: React.FC = () => {
           });
         };
 
-        setMarkerWithImages(origin, map, origin);
-        setMarkerWithImages(destination, map, destination);
+        setMarkerWithImages(origin, map, origin, waypoints[0].id);
+        setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id);
 
         const waypointsForMarkers = waypoints.slice(1, waypoints.length - 1);
-        waypointsForMarkers.forEach(({ location }) => {
-          setMarkerWithImages(location, map, location);
+        waypointsForMarkers.forEach(({ location, id }) => {
+          setMarkerWithImages(location, map, location, id);
         });
 
         const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
@@ -263,45 +266,33 @@ const MapWithDirections: React.FC = () => {
     }
   };
 
-return (
-  <>
-    <div id="map" style={{ width: '100%', height: '500px' }}></div>
+  return (
+    <>
+      <div id="map" style={{ width: '100%', height: '500px' }}></div>
 
-    {isLoggedIn && (
-      <>
-        <input
-          id="autocomplete-input"
-          type="text"
-          placeholder="Enter a location"
-          value={newWaypoint}
-          onChange={(e) => setNewWaypoint(e.target.value)}
-        />
-        <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
-        <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
-      </>
-    )}
+      {isLoggedIn && (
+        <>
+          <input
+            id="autocomplete-input"
+            type="text"
+            placeholder="Enter a location"
+            value={newWaypoint}
+            onChange={(e) => setNewWaypoint(e.target.value)}
+          />
+          <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
+          <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
+        </>
+      )}
 
-    <IonModal isOpen={modalOpen} onDidDismiss={() => setModalOpen(false)}>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{modalLocation}</IonTitle>
-          <IonButton slot="end" onClick={() => setModalOpen(false)}>Close</IonButton>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent>
-        {modalImages.length > 0 ? (
-          <div style={{ textAlign: 'center' }}>
-            {modalImages.map((image, index) => (
-              <img key={index} src={image} alt={`Location Image ${index + 1}`} style={{ maxWidth: '100%' }} />
-            ))}
-          </div>
-        ) : (
-          <p>No images available for this location.</p>
-        )}
-      </IonContent>
-    </IonModal>
-  </>
-);
+      <LocationModal
+        isOpen={modalOpen}
+        location={modalLocation}
+        images={modalImages}
+        waypointId={selectedWaypointId}
+        onClose={() => setModalOpen(false)}
+      />
+    </>
+  );
 };
 
 export default MapWithDirections;
