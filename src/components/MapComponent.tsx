@@ -8,13 +8,26 @@ declare global {
   interface Window { initMap: () => void; }
 }
 
+interface Waypoint {
+  location: string;
+  stopover: boolean;
+  id: string;
+}
+
+interface ImageData {
+  image: string;
+  likes: number;
+  comments: string[];
+  title: string;
+}
+
 const MapWithDirections: React.FC = () => {
-  const [waypoints, setWaypoints] = useState<{ location: string; stopover: boolean; id: string }[]>([]);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [newWaypoint, setNewWaypoint] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLocation, setModalLocation] = useState('');
-  const [modalImages, setModalImages] = useState<string[]>([]);
+  const [modalImages, setModalImages] = useState<ImageData[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
 
@@ -37,7 +50,7 @@ const MapWithDirections: React.FC = () => {
 
     // Real-time listener for waypoints
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const loadedWaypoints: { location: string; stopover: boolean; id: string }[] = [];
+      const loadedWaypoints: Waypoint[] = [];
       
       querySnapshot.forEach((doc) => {
         const data = doc.data();

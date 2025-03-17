@@ -7,17 +7,24 @@ import 'swiper/css/effect-fade';
 import 'swiper/css/bundle';
 import { uploadImage, updateDocument } from '../firebase/firebaseController';
 
+interface ImageData {
+  image: string;
+  likes: number;
+  comments: string[];
+  title: string;
+}
+
 interface LocationModalProps {
   isOpen: boolean;
   location: string;
-  images: string[];
+  images: ImageData[];
   waypointId: string | null;
   onClose: () => void;
 }
 
 const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images: initialImages, waypointId, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [images, setImages] = useState<string[]>(initialImages);
+  const [images, setImages] = useState<ImageData[]>(initialImages);
   const [toastMsg, setToastMsg] = useState<string>('');
 
   useEffect(() => {
@@ -35,7 +42,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
       if (!url) throw new Error("Failed to get download URL");
 
       if (waypointId) {
-        const updatedImages = [...images, url];
+        const updatedImages = [...images, { image: url, likes: 0, comments: [], title: "New Image" }];
         // @ts-ignore
         await updateDocument('myWaypoints', waypointId, { images: updatedImages });
 
@@ -72,27 +79,27 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
 
           {images.length > 0 ? (
-          <Swiper
-          effect={'cube'}
-          loop={true}
-          grabCursor={true}
-          cubeEffect={{
-            shadow: true,
-            slideShadows: true,
-            shadowOffset: 20,
-            shadowScale: 0.94,
-          }}
-          pagination={true}
-          modules={[EffectCube, Pagination]}
-          className="mySwiper"
-        >
-            {images.map((image, index) => (
-              <SwiperSlide key={index}>
-                <img src={image} alt={`Location Image ${index + 1}`} style={{ maxWidth: '100%' }} />
-                <p>Frank</p>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+            <Swiper
+              effect={'cube'}
+              loop={true}
+              grabCursor={true}
+              cubeEffect={{
+                shadow: true,
+                slideShadows: true,
+                shadowOffset: 20,
+                shadowScale: 0.94,
+              }}
+              pagination={true}
+              modules={[EffectCube, Pagination]}
+              className="mySwiper"
+            >
+              {images.map((item, index) => (
+                <SwiperSlide key={index}>
+                  <img src={item.image} alt={`Image ${index + 1}`} style={{ maxWidth: '100%' }} />
+                  <p>{item.title}</p>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           ) : (
             <p>No images available for this location.</p>
           )}
