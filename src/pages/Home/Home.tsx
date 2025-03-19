@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './Home.css';
 import '../../theme/variables.css'
@@ -24,18 +24,20 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Home</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={goToLoginPage}>Admin Login</IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Home</IonTitle>
+            <IonTitle>Hack the Highway Trip</IonTitle>
+            
           </IonToolbar>
         </IonHeader>
       <MapWithDirections />
       {/* <IonButton onClick={goToUploadPage}>Upload Photo</IonButton> */}
-      <IonButton onClick={goToLoginPage}>Admin Page</IonButton>
       </IonContent>
     </IonPage>
   );

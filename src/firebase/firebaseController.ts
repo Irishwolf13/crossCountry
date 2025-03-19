@@ -69,15 +69,19 @@ export const createDocument = async (collectionName: string, data: UserInfo) => 
 
   // ********************* IMAGES ********************* 
 ////////////////////////////////////////// IMAGE UPLOAD FUNCTION //////////////////////////////////////////
-export const uploadImage = async (file: File): Promise<string | null> => {
+export const uploadImage = async (file: File): Promise<{ downloadURL: string; uniqueFileName: string } | null> => {
   try {
-    const storageRef = ref(storage, `images/${file.name}`);
+    // Generate a unique filename using UUID
+    const uniqueFileName = `${uuidv4()}`;
+    const storageRef = ref(storage, `images/${uniqueFileName}`);
+    
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
     console.log("Image successfully uploaded, URL: ", downloadURL);
-    return downloadURL;
+    
+    return { downloadURL, uniqueFileName };
   } catch (error) {
-    console.error("Error uploading image: ", error);
+    console.error("Error uploading image:", error);
     throw new Error("Could not upload image");
   }
 };

@@ -1,5 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { IonModal, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonToast } from '@ionic/react';
+import {
+  IonModal,
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButton,
+  IonToast,
+  IonButtons,
+} from '@ionic/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCube, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -12,6 +20,7 @@ interface ImageData {
   likes: number;
   comments: string[];
   title: string;
+  uuid: string;
 }
 
 interface LocationModalProps {
@@ -26,6 +35,8 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<ImageData[]>(initialImages);
   const [toastMsg, setToastMsg] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<number | null>(null);
+  const [editText, setEditText] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
@@ -36,18 +47,29 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
+    
     try {
-      const url = await uploadImage(file);
-      if (!url) throw new Error("Failed to get download URL");
-
+      const result = await uploadImage(file);
+      if (!result) throw new Error("Failed to get download URL");
+      
+      const { downloadURL, uniqueFileName } = result;
+      
       if (waypointId) {
-        const updatedImages = [...images, { image: url, likes: 0, comments: [], title: "New Image" }];
-        // @ts-ignore
+        const updatedImages = [
+          ...images,
+          { 
+            image: downloadURL,
+            uuid: uniqueFileName,
+            likes: 0,
+            comments: [],
+            title: "New Image"
+          }
+        ];
+        
         await updateDocument('myWaypoints', waypointId, { images: updatedImages });
-
+        
         setImages(updatedImages);
-
+        
         setToastMsg("Image uploaded and Firestore updated successfully!");
       } else {
         setToastMsg("Waypoint ID is missing.");
@@ -59,12 +81,39 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
     }
   };
 
+  const handleEditClick = (index: number, currentTitle: string) => {
+    setIsEditing(index);
+    setEditText(currentTitle);
+  };
+
+  const handleSaveBlur = async (index: number) => {
+    if (waypointId && index !== null) {
+      const updatedImages = [...images];
+      updatedImages[index].title = editText;
+
+      try {
+        await updateDocument('myWaypoints', waypointId, { images: updatedImages });
+        setImages(updatedImages);
+        setToastMsg("Title updated successfully!");
+      } catch (error) {
+        console.error('Error updating title:', error);
+        setToastMsg("Could not update title.");
+      }
+    }
+    setIsEditing(null);
+  };
+
   return (
     <>
       <IonModal isOpen={isOpen} onDidDismiss={onClose}>
         <IonHeader>
           <IonToolbar>
-            <IonTitle>{location || 'Unknown Location'}</IonTitle>
+            <IonButtons slot="start">
+              <IonButton onClick={onClose}>Close</IonButton>
+            </IonButtons>
+            <IonButtons slot="end">
+              <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
+            </IonButtons>
           </IonToolbar>
         </IonHeader>
         <IonContent>
@@ -75,8 +124,8 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
-          <IonButton onClick={onClose}>Close</IonButton>
-          <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
+
+          {location ? `${location}` : location || 'Unknown'}
 
           {images.length > 0 ? (
             <Swiper
@@ -95,8 +144,25 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             >
               {images.map((item, index) => (
                 <SwiperSlide key={index}>
+                  <div>
+                    {isEditing === index ? (
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={3}
+                        style={{ width: '100%', resize: 'none', overflowWrap: 'break-word' }}
+                        onBlur={() => handleSaveBlur(index)}
+                      />
+                    ) : (
+                      <p
+                        onClick={() => handleEditClick(index, item.title)}
+                        style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', cursor: 'pointer' }}
+                      >
+                        {item.title}
+                      </p>
+                    )}
+                  </div>
                   <img src={item.image} alt={`Image ${index + 1}`} style={{ maxWidth: '100%' }} />
-                  <p>{item.title}</p>
                 </SwiperSlide>
               ))}
             </Swiper>
