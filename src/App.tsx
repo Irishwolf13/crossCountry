@@ -2,13 +2,15 @@
 import React from 'react';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { Redirect, Route } from 'react-router-dom';
-import Home from './pages/Home/Home';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Login from './pages/Login/Login';
-import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
+import { Route } from 'react-router-dom';
 import { AuthProvider } from './firebase/AuthContext';
 import PrivateRoute from './firebase/PrivateRoute';
+
+import Home from './pages/Home/Home';
+import Login from './pages/Login/Login';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Approval from './pages/Approval/Approval';
+import MainMap from './pages/MainMap/MainMap';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -30,7 +32,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
-import Approval from './pages/Approval/Approval';
+import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
 
 setupIonicReact();
 
@@ -41,10 +43,11 @@ const App: React.FC = () => (
         <IonRouterOutlet>
           <PrivateRoute exact path="/dashboard" component={Dashboard} />
           <PrivateRoute exact path="/approval" component={Approval} />
+          <PrivateRoute exact path="/uploadStuff" component={UploadPhoto} />
 
           <Route exact path="/login" component={Login} />
           <Route exact path="/home" component={Home} />
-          <Route exact path="/uploadPhoto" component={UploadPhoto} />
+          <Route exact path="/map" component={MainMap} />
           <Route exact path="/" component={Home} />
         </IonRouterOutlet>
       </IonReactRouter>

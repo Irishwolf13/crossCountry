@@ -85,3 +85,21 @@ export const uploadImage = async (file: File): Promise<{ downloadURL: string; un
     throw new Error("Could not upload image");
   }
 };
+
+  // ********************* VIDEOS ********************* 
+export const uploadVideo = async (file: File): Promise<{ downloadURL: string; uniqueFileName: string } | null> => {
+  try {
+    // Generate a unique filename using UUID
+    const uniqueFileName = `${uuidv4()}`;
+    const storageRef = ref(storage, `videos/${uniqueFileName}`);
+
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log("Video successfully uploaded, URL: ", downloadURL);
+
+    return { downloadURL, uniqueFileName };
+  } catch (error) {
+    console.error("Error uploading video:", error);
+    throw new Error("Could not upload video");
+  }
+};

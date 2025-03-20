@@ -33,3 +33,10 @@ ion-toast.toastSuccess::part(button) {
 }
 
 /* ************************ TITLE ************************ */
+
+.frank {
+  color: #000000;
+  text-align: center;
+  margin-bottom: 20px;
+  margin-top: 10px;
+}
