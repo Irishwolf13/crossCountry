@@ -30,6 +30,7 @@ import '@ionic/react/css/palettes/dark.system.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import Approval from './pages/Approval/Approval';
 
 setupIonicReact();
 
@@ -39,6 +40,8 @@ const App: React.FC = () => (
       <IonReactRouter>
         <IonRouterOutlet>
           <PrivateRoute exact path="/dashboard" component={Dashboard} />
+          <PrivateRoute exact path="/approval" component={Approval} />
+
           <Route exact path="/login" component={Login} />
           <Route exact path="/home" component={Home} />
           <Route exact path="/uploadPhoto" component={UploadPhoto} />

@@ -21,6 +21,7 @@ interface ImageData {
   comments: string[];
   title: string;
   uuid: string;
+  approved: boolean;
 }
 
 interface LocationModalProps {
@@ -62,10 +63,11 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             uuid: uniqueFileName,
             likes: 0,
             comments: [],
-            title: "New Image"
+            title: "New Image",
+            approved: false,
           }
         ];
-        
+        // @ts-ignore
         await updateDocument('myWaypoints', waypointId, { images: updatedImages });
         
         setImages(updatedImages);
@@ -92,6 +94,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
       updatedImages[index].title = editText;
 
       try {
+        // @ts-ignore
         await updateDocument('myWaypoints', waypointId, { images: updatedImages });
         setImages(updatedImages);
         setToastMsg("Title updated successfully!");
@@ -127,48 +130,48 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
 
           {location ? `${location}` : location || 'Unknown'}
 
-          {images.length > 0 ? (
-            <Swiper
-              effect={'cube'}
-              loop={true}
-              grabCursor={true}
-              cubeEffect={{
-                shadow: true,
-                slideShadows: true,
-                shadowOffset: 20,
-                shadowScale: 0.94,
-              }}
-              pagination={true}
-              modules={[EffectCube, Pagination]}
-              className="mySwiper"
-            >
-              {images.map((item, index) => (
-                <SwiperSlide key={index}>
-                  <div>
-                    {isEditing === index ? (
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        rows={3}
-                        style={{ width: '100%', resize: 'none', overflowWrap: 'break-word' }}
-                        onBlur={() => handleSaveBlur(index)}
-                      />
-                    ) : (
-                      <p
-                        onClick={() => handleEditClick(index, item.title)}
-                        style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', cursor: 'pointer' }}
-                      >
-                        {item.title}
-                      </p>
-                    )}
-                  </div>
-                  <img src={item.image} alt={`Image ${index + 1}`} style={{ maxWidth: '100%' }} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+          {images.filter(item => item.approved).length > 0 ? (
+  <Swiper
+    effect={'cube'}
+    loop={true}
+    grabCursor={true}
+    cubeEffect={{
+      shadow: true,
+      slideShadows: true,
+      shadowOffset: 20,
+      shadowScale: 0.94,
+    }}
+    pagination={true}
+    modules={[EffectCube, Pagination]}
+    className="mySwiper"
+  >
+    {images.filter(item => item.approved).map((item, index) => (
+      <SwiperSlide key={index}>
+        <div>
+          {isEditing === index ? (
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              style={{ width: '100%', resize: 'none', overflowWrap: 'break-word' }}
+              onBlur={() => handleSaveBlur(index)}
+            />
           ) : (
-            <p>No images available for this location.</p>
+            <p
+              onClick={() => handleEditClick(index, item.title)}
+              style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', cursor: 'pointer' }}
+            >
+              {item.title}
+            </p>
           )}
+        </div>
+        <img src={item.image} alt={`Image ${index + 1}`} style={{ maxWidth: '100%' }} />
+      </SwiperSlide>
+    ))}
+  </Swiper>
+) : (
+  <p>No images available for this location.</p>
+)}
         </IonContent>
       </IonModal>
 

@@ -1,0 +1,30 @@
+.map-container {
+    position: relative; /* This is necessary to properly position the overlay */
+}
+  
+.overlay-image {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    max-height: 10vh; /* Set maximum height */
+    width: auto;       /* Maintain aspect ratio by allowing automatic width calculation */
+    z-index: 1;        /* Ensure the image appears above the map */
+}
+
+.overlay-danJohn {
+    position: absolute;
+    top: 66vh;
+    left: 65px;
+    max-height: 7vh;
+    width: auto;     
+    z-index: 10;      
+}
+
+.overlay-car {
+    position: absolute;
+    top: 63vh;
+    left: 0px;
+    max-height: 10vh;
+    width: auto;     
+    z-index: 1;      
+}

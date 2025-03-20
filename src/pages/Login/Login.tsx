@@ -33,12 +33,16 @@ const Login: React.FC = () => {
     }
   };
 
+  const goToHome = () => {
+    history.push('/');
+  };
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton />
+            <IonButton onClick={goToHome}>Home</IonButton>
           </IonButtons>
           <IonTitle>Admin Login</IonTitle>
         </IonToolbar>
