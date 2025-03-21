@@ -218,11 +218,12 @@ const MapWithDirections: React.FC = () => {
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
         script.id = 'google-maps';
         script.async = true;
-        document.body.appendChild(script);
-        window.initMap = () => {
+        script.defer = true;
+        script.onload = () => {
           initMap();
           initAutocomplete();
         };
+        document.body.appendChild(script);
       } else {
         if (window.google && window.google.maps) {
           initMap();
