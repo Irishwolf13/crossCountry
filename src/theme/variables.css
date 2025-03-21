@@ -34,7 +34,7 @@ ion-toast.toastSuccess::part(button) {
 
 /* ************************ TITLE ************************ */
 
-.frank {
+.playButton {
   color: #000000;
   text-align: center;
   margin-bottom: 20px;

@@ -85,7 +85,6 @@ const MapWithDirections: React.FC = () => {
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
-
       });
 
       const directionsService = new window.google.maps.DirectionsService();
@@ -154,19 +153,26 @@ const MapWithDirections: React.FC = () => {
           });
         };
 
-    // Change the marker icon specifically for the second-to-last waypoint
-    const customIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58'; // Replace with your custom icon URL
-    const waypointForCustomIcon = waypoints[waypoints.length - 2];
-    setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, customIconUrl);
+        // Custom icon URLs
+        const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
+        const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f'; // Replace with your actual last marker icon URL
+        const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
 
-    // Continue with other markers
-    setMarkerWithImages(origin, map, origin, waypoints[0].id);
-    setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id);
+        // Change the marker icon specifically for the second-to-last waypoint
+        const waypointForCustomIcon = waypoints[waypoints.length - 2];
+        setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
 
-    const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2); // Exclude the second-to-last waypoint already processed
-    waypointsForMarkers.forEach(({ location, id }) => {
-      setMarkerWithImages(location, map, location, id);
-    });
+        // Set custom icon for the last waypoint
+        setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);
+
+        // Set custom icon for the first (origin) waypoint
+        setMarkerWithImages(origin, map, origin, waypoints[0].id, originCustomIconUrl);
+
+        // Continue with other markers
+        const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2); // Exclude the second-to-last and last waypoint already processed
+        waypointsForMarkers.forEach(({ location, id }) => {
+          setMarkerWithImages(location, map, location, id);
+        });
 
         const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
 
@@ -227,7 +233,8 @@ const MapWithDirections: React.FC = () => {
 
     loadGoogleMapsScript();
 
-  }, [waypoints]);
+}, [waypoints]);
+
 
   const isLocationInUSA = (results: any) => {
     if (!results || results.length === 0) return false;

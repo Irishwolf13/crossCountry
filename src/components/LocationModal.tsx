@@ -192,7 +192,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
                           onEnded={() => handleVideoEnded(index)}
                           width='100%'
                         />
-                        <div className='frank'>
+                        <div className='playButton'>
                           <IonButton onClick={() => togglePlayPause(index)}>
                             {videoPlayingStates[index] ? 'Pause' : 'Play'}
                           </IonButton>
