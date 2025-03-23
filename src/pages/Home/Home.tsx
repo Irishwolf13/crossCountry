@@ -7,13 +7,9 @@ import '../../theme/variables.css'
 const Home: React.FC = () => {
   const history = useHistory();
 
-  const goToLoginPage = () => {
-    history.push('/dashboard');
-  };
-
-  const goToMapPage = () => {
-    history.push('/map');
-  };
+  const goToPage = (myPage:string) => {
+    history.push(`/${myPage}`);
+  }
 
   return (
     <IonPage>
@@ -24,10 +20,11 @@ const Home: React.FC = () => {
       </IonHeader>
       <IonContent fullscreen>
       <div className="button-container">
-        <IonButton onClick={goToMapPage}>Tour Map</IonButton>
-        <IonButton onClick={goToMapPage}>Music Playlists</IonButton>
-        <IonButton onClick={goToMapPage}>Deep Thoughts</IonButton>
-        <IonButton onClick={goToLoginPage} className="bottom-button">Admin Login</IonButton>
+        <IonButton onClick={() => goToPage('map')}>Tour Map</IonButton>
+        <IonButton onClick={() => goToPage('musicPlaylists')}>Music Playlists</IonButton>
+        <IonButton onClick={() => goToPage('deepThoughts')}>Deep Thoughts</IonButton>
+        
+        <IonButton onClick={() => goToPage('dashboard')} className="bottom-button">Admin Login</IonButton>
       </div>
       </IonContent>
     </IonPage>

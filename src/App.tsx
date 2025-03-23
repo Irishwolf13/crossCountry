@@ -33,6 +33,8 @@ import '@ionic/react/css/palettes/dark.system.css';
 /* Theme variables */
 import './theme/variables.css';
 import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
+import MusicPlaylists from './pages/MusicPlaylists/MusicPlaylists';
+import DeepThoughts from './pages/DeepThoughts/DeepThoughts';
 
 setupIonicReact();
 
@@ -46,6 +48,8 @@ const App: React.FC = () => (
           <PrivateRoute exact path="/uploadStuff" component={UploadPhoto} />
 
           <Route exact path="/login" component={Login} />
+          <Route exact path="/musicPlaylists" component={MusicPlaylists} />
+          <Route exact path="/deepThoughts" component={DeepThoughts} />
           <Route exact path="/home" component={Home} />
           <Route exact path="/map" component={MainMap} />
           <Route exact path="/" component={Home} />
