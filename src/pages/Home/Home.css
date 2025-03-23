@@ -28,3 +28,12 @@
     width: auto;     
     z-index: 1;      
 }
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.bottom-button {
+    margin-top: auto;
+  }

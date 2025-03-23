@@ -346,6 +346,7 @@ const MapWithDirections: React.FC = () => {
 
   return (
     <>
+      <LocationModal isOpen={modalOpen} location={modalLocation} images={modalImages} waypointId={selectedWaypointId} onClose={() => setModalOpen(false)}/>
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
       {isLoggedIn && (
@@ -359,9 +360,10 @@ const MapWithDirections: React.FC = () => {
 
 
 
-      <LocationModal isOpen={modalOpen} location={modalLocation} images={modalImages} waypointId={selectedWaypointId} onClose={() => setModalOpen(false)}/>
     </>
   );
 };
 
 export default MapWithDirections;
+
+// <IonContent className="ion-padding" style={{ height: '100%' }}>

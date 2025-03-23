@@ -125,7 +125,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+      <IonModal isOpen={isOpen} onDidDismiss={onClose} >
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
@@ -137,6 +137,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           </IonToolbar>
         </IonHeader>
         <IonContent>
+          {location ? `${location}` : location || 'Unknown'}
           <input
             type="file"
             accept="image/*"
@@ -145,7 +146,6 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             onChange={handleFileChange}
           />
 
-          {location ? `${location}` : location || 'Unknown'}
 
           {images.filter(item => item.approved).length > 0 ? (
             <Swiper
@@ -163,7 +163,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               className="mySwiper"
             >
               {images.filter(item => item.approved).map((item, index) => (
-                <SwiperSlide key={index}>
+                <SwiperSlide key={index} >
                   <div>
                     {isEditing === index ? (
                       <textarea

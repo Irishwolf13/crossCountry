@@ -19,12 +19,16 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="end"></IonButtons>
+          <IonTitle>Hack the Highway!</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonButton onClick={goToLoginPage}>Admin Login</IonButton>
+      <div className="button-container">
         <IonButton onClick={goToMapPage}>Tour Map</IonButton>
+        <IonButton onClick={goToMapPage}>Music Playlists</IonButton>
+        <IonButton onClick={goToMapPage}>Deep Thoughts</IonButton>
+        <IonButton onClick={goToLoginPage} className="bottom-button">Admin Login</IonButton>
+      </div>
       </IonContent>
     </IonPage>
   );
