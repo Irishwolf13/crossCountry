@@ -40,11 +40,11 @@ const MapWithDirections: React.FC = () => {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribeFromAuth = auth.onAuthStateChanged(user => {
       setIsLoggedIn(!!user);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeFromAuth();
   }, []);
 
   useEffect(() => {
@@ -53,11 +53,12 @@ const MapWithDirections: React.FC = () => {
     }
   }, [modalOpen]);
 
+  //@ts-ignore
   useEffect(() => {
     const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
 
     // Real-time listener for waypoints
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const unsubscribeFromWaypoints = onSnapshot(q, (querySnapshot) => {
       const loadedWaypoints: Waypoint[] = [];
       
       querySnapshot.forEach((doc) => {
@@ -74,10 +75,13 @@ const MapWithDirections: React.FC = () => {
       console.error('Error listening to waypoints: ', error);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeFromWaypoints;
   }, []);
 
   useEffect(() => {
+    // Only load the map if waypoints are available
+    if (waypoints.length === 0) return;
+
     const initMap = () => {
       const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
         zoom: 6,
@@ -93,104 +97,102 @@ const MapWithDirections: React.FC = () => {
       });
       directionsRenderer.setMap(map);
 
-      if (waypoints.length > 0) {
-        const origin = waypoints[0]?.location || '';
-        const destination = waypoints[waypoints.length - 1]?.location || '';
+      const origin = waypoints[0]?.location || '';
+      const destination = waypoints[waypoints.length - 1]?.location || '';
 
-        const geocoder = new window.google.maps.Geocoder();
+      const geocoder = new window.google.maps.Geocoder();
 
-        const setMarkerWithImages = (
-          location: any,
-          map: any,
-          title: string,
-          id: string,
-          customIcon?: string
-        ) => {
-          geocoder.geocode({ address: location }, async (results, status) => {
-            if (status === 'OK' && results) {
-              const markerOptions: google.maps.MarkerOptions = {
-                position: results[0].geometry.location,
-                map: map,
-                title: title,
+      const setMarkerWithImages = (
+        location: any,
+        map: any,
+        title: string,
+        id: string,
+        customIcon?: string
+      ) => {
+        geocoder.geocode({ address: location }, async (results, status) => {
+          if (status === 'OK' && results) {
+            const markerOptions: google.maps.MarkerOptions = {
+              position: results[0].geometry.location,
+              map: map,
+              title: title,
+            };
+      
+            // Check if a custom icon is provided and set its options
+            if (customIcon) {
+              markerOptions.icon = {
+                url: customIcon,
+                scaledSize: new google.maps.Size(30, 40), // Adjust to match default icon size
+                anchor: new google.maps.Point(14, 35),   // Adjust the anchor point
               };
-        
-              // Check if a custom icon is provided and set its options
-              if (customIcon) {
-                markerOptions.icon = {
-                  url: customIcon,
-                  scaledSize: new google.maps.Size(30, 40), // Adjust to match default icon size
-                  anchor: new google.maps.Point(14, 35),   // Adjust the anchor point
-                };
-                markerOptions.zIndex = 1000;
-              }
-        
-              const marker = new window.google.maps.Marker(markerOptions);
-        
-              marker.addListener('click', async () => {
-                setModalLocation(title);
-                setSelectedWaypointId(id);
-                setModalOpen(true);
-        
-                try {
-                  const docRef = collection(db, 'myWaypoints');
-                  const waypointDoc = await getDocs(query(docRef));
-                  const selectedWaypoint = waypointDoc.docs.find(
-                    (doc) => doc.data().address === title
-                  );
-                  if (selectedWaypoint) {
-                    const data = selectedWaypoint.data();
-                    const imagesData: ImageData[] = data.images || [];
-                    setModalImages(imagesData);
-                  } else {
-                    setModalImages([]);
-                  }
-                } catch (error) {
-                  console.error('Error fetching images: ', error);
+              markerOptions.zIndex = 1000;
+            }
+      
+            const marker = new window.google.maps.Marker(markerOptions);
+      
+            marker.addListener('click', async () => {
+              setModalLocation(title);
+              setSelectedWaypointId(id);
+              setModalOpen(true);
+      
+              try {
+                const docRef = collection(db, 'myWaypoints');
+                const waypointDoc = await getDocs(query(docRef));
+                const selectedWaypoint = waypointDoc.docs.find(
+                  (doc) => doc.data().address === title
+                );
+                if (selectedWaypoint) {
+                  const data = selectedWaypoint.data();
+                  const imagesData: ImageData[] = data.images || [];
+                  setModalImages(imagesData);
+                } else {
                   setModalImages([]);
                 }
-              });
-            }
-          });
-        };
-
-        // Custom icon URLs
-        const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
-        const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f'; // Replace with your actual last marker icon URL
-        const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
-
-        // Change the marker icon specifically for the second-to-last waypoint
-        const waypointForCustomIcon = waypoints[waypoints.length - 2];
-        setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
-
-        // Set custom icon for the last waypoint
-        setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);
-
-        // Set custom icon for the first (origin) waypoint
-        setMarkerWithImages(origin, map, origin, waypoints[0].id, originCustomIconUrl);
-
-        // Continue with other markers
-        const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2); // Exclude the second-to-last and last waypoint already processed
-        waypointsForMarkers.forEach(({ location, id }) => {
-          setMarkerWithImages(location, map, location, id);
-        });
-
-        const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
-
-        const request: google.maps.DirectionsRequest = {
-          origin: origin,
-          destination: destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-          waypoints: waypointsForDirections,
-        };
-
-        directionsService.route(request, (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            directionsRenderer.setDirections(result);
-          } else {
-            console.error('Directions request failed due to ' + status);
+              } catch (error) {
+                console.error('Error fetching images: ', error);
+                setModalImages([]);
+              }
+            });
           }
         });
-      }
+      };
+
+      // Custom icon URLs
+      const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
+      const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f';
+      const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
+
+      // Change the marker icon specifically for the second-to-last waypoint
+      const waypointForCustomIcon = waypoints[waypoints.length - 2];
+      setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
+
+      // Set custom icon for the last waypoint
+      setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);
+
+      // Set custom icon for the first (origin) waypoint
+      setMarkerWithImages(origin, map, origin, waypoints[0].id, originCustomIconUrl);
+
+      // Continue with other markers
+      const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2); // Exclude the second-to-last and last waypoint already processed
+      waypointsForMarkers.forEach(({ location, id }) => {
+        setMarkerWithImages(location, map, location, id);
+      });
+
+      const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
+
+      const request: google.maps.DirectionsRequest = {
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        waypoints: waypointsForDirections,
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          directionsRenderer.setDirections(result);
+        } else {
+          console.error('Directions request failed due to ' + status);
+        }
+      });
     };
 
     const initAutocomplete = () => {
@@ -234,8 +236,7 @@ const MapWithDirections: React.FC = () => {
 
     loadGoogleMapsScript();
 
-}, [waypoints]);
-
+  }, [waypoints]);
 
   const isLocationInUSA = (results: any) => {
     if (!results || results.length === 0) return false;
@@ -317,12 +318,15 @@ const MapWithDirections: React.FC = () => {
                   images: []
                 };
   
-                // Update local waypoints before writing to the database
-                setWaypoints((prevWaypoints) => [
-                  ...prevWaypoints.slice(0, -1),
-                  { location: address, stopover: true, id: '' },
-                  prevWaypoints[prevWaypoints.length - 1]
-                ]);
+                // Add the new waypoint at the second last position
+                setWaypoints((prevWaypoints) => {
+                  const waypointsWithoutLast = prevWaypoints.slice(0, -1);
+                  return [
+                    ...waypointsWithoutLast,
+                    { location: address, stopover: true, id: '' },
+                    prevWaypoints[prevWaypoints.length - 1] // Preserve the last destination
+                  ];
+                });
   
                 await addDoc(collection(db, 'myWaypoints'), newWaypointData);
   
@@ -343,6 +347,7 @@ const MapWithDirections: React.FC = () => {
       alert('Geolocation is not supported by your browser.');
     }
   };
+  
 
   return (
     <>
@@ -357,13 +362,9 @@ const MapWithDirections: React.FC = () => {
           <input id="autocomplete-input" type="text" placeholder="Enter a location" value={newWaypoint} onChange={(e) => setNewWaypoint(e.target.value)}/>
         </>
       )}
-
-
-
     </>
   );
 };
 
 export default MapWithDirections;
 
-// <IonContent className="ion-padding" style={{ height: '100%' }}>

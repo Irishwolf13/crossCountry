@@ -35,6 +35,7 @@ import './theme/variables.css';
 import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
 import MusicPlaylists from './pages/MusicPlaylists/MusicPlaylists';
 import DeepThoughts from './pages/DeepThoughts/DeepThoughts';
+import SignGuestBook from './pages/SignGuestBook/SignGuestBook';
 
 setupIonicReact();
 
@@ -46,7 +47,8 @@ const App: React.FC = () => (
           <PrivateRoute exact path="/dashboard" component={Dashboard} />
           <PrivateRoute exact path="/approval" component={Approval} />
           <PrivateRoute exact path="/uploadStuff" component={UploadPhoto} />
-
+          <Route path="/signGuestBook" component={SignGuestBook} />
+      
           <Route exact path="/login" component={Login} />
           <Route exact path="/musicPlaylists" component={MusicPlaylists} />
           <Route exact path="/deepThoughts" component={DeepThoughts} />

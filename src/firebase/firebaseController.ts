@@ -1,5 +1,5 @@
 // firebaseController.ts
-import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, addDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
 import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 import { db, storage } from "./config";
 import { UserInfo } from "./types";
@@ -101,5 +101,52 @@ export const uploadVideo = async (file: File): Promise<{ downloadURL: string; un
   } catch (error) {
     console.error("Error uploading video:", error);
     throw new Error("Could not upload video");
+  }
+};
+
+
+
+
+
+// ********************* GUEST COMMENTS ********************* 
+// Function to add a guest comment
+export const addGuestComment = async (name: string, comment: string) => {
+  try {
+    await addDoc(collection(db, 'guestComments'), {
+      name,
+      comment,
+      createdAt: serverTimestamp(), // Adding a timestamp here
+    });
+  } catch (error) {
+    console.error('Error adding guest comment:', error);
+    throw new Error('Could not add guest comment');
+  }
+};
+
+// Function to fetch all guest comments
+export const fetchGuestComments = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'guestComments'));
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt ? data.createdAt.toDate() : null, // Convert timestamp to Date
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching guest comments:", error);
+    throw new Error("Could not fetch guest comments");
+  }
+};
+// Function to delete a guest comment
+export const deleteGuestComment = async (commentId: string) => {
+  try {
+    await deleteDoc(doc(db, 'guestComments', commentId));
+    console.log("Guest comment deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting guest comment:", error);
+    throw new Error("Could not delete guest comment");
   }
 };
