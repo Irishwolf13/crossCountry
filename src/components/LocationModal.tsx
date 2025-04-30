@@ -15,6 +15,7 @@ import 'swiper/css/effect-fade';
 import 'swiper/css/bundle';
 import { uploadImage, updateDocument } from '../firebase/firebaseController';
 import ReactPlayer from 'react-player';
+import { useAuth } from '../firebase/AuthContext'; // Import AuthContext
 
 interface MediaData {
   image?: string;
@@ -23,7 +24,6 @@ interface MediaData {
   comments: string[];
   title: string;
   uuid: string;
-  approved: boolean;
 }
 
 interface LocationModalProps {
@@ -41,12 +41,23 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>('');
   const [videoPlayingStates, setVideoPlayingStates] = useState<{ [key: number]: boolean }>({});
+  
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
       setImages(initialImages);
     }
-  }, [isOpen, initialImages]);
+
+    // Check if the current user is an admin
+    const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+    if (user && user.email === adminEmail) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [isOpen, initialImages, user]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -67,7 +78,6 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             likes: 0,
             comments: [],
             title: "New Image",
-            approved: false,
           },
         ];
         // @ts-ignore
@@ -125,19 +135,21 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose} >
+      <IonModal isOpen={isOpen} onDidDismiss={onClose}>
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
               <IonButton onClick={onClose}>Close</IonButton>
             </IonButtons>
-            <IonButtons slot="end">
-              <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
-            </IonButtons>
+            {isAdmin && (
+              <IonButtons slot="end">
+                <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
+              </IonButtons>
+            )}
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          {location ? `${location}` : location || 'Unknown'}
+          {location ? `${location}` : 'Unknown'}
           <input
             type="file"
             accept="image/*"
@@ -146,8 +158,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             onChange={handleFileChange}
           />
 
-
-          {images.filter(item => item.approved).length > 0 ? (
+          {images.length > 0 ? (
             <Swiper
               effect={'cube'}
               loop={true}
@@ -162,8 +173,8 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               modules={[EffectCube, Pagination]}
               className="mySwiper"
             >
-              {images.filter(item => item.approved).map((item, index) => (
-                <SwiperSlide key={index} >
+              {images.map((item, index) => (
+                <SwiperSlide key={index}>
                   <div>
                     {isEditing === index ? (
                       <textarea
@@ -192,11 +203,10 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
                           onEnded={() => handleVideoEnded(index)}
                           width='100%'
                         />
-                        <div className='playButton'>
+                        <div className="playButton">
                           <IonButton onClick={() => togglePlayPause(index)}>
                             {videoPlayingStates[index] ? 'Pause' : 'Play'}
                           </IonButton>
-
                         </div>
                       </>
                     ) : null}
@@ -205,7 +215,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               ))}
             </Swiper>
           ) : (
-            <p>No images available for this location.</p>
+            <p>No media available for this location.</p>
           )}
         </IonContent>
       </IonModal>

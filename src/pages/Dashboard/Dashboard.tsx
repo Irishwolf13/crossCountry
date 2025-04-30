@@ -76,7 +76,6 @@ const Dashboard: React.FC = () => {
   
         // Create a new video object with UUID from the upload function
         const newVideoObject = {
-          approved: false,
           video: downloadURL,
           likes: 0,
           title: "New Video",

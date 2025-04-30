@@ -11,6 +11,8 @@ const SignGuestBook: React.FC = () => {
   const [comment, setComment] = useState<string>('');
   const [comments, setComments] = useState<Array<{ id: string; name: string; comment: string; createdAt: Date | null }>>([]);
 
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
   useEffect(() => {
     const loadComments = async () => {
       try {
@@ -22,7 +24,15 @@ const SignGuestBook: React.FC = () => {
     };
 
     loadComments();
-  }, []);
+
+    // Check if the current user is an admin
+    const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+    if (user && user.email === adminEmail) {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   const handleAddComment = async () => {
     if (name && comment) {
@@ -72,25 +82,25 @@ const SignGuestBook: React.FC = () => {
         <IonButton onClick={handleAddComment}>Add Comment</IonButton>
 
         <IonList>
-            {comments.map(({ id, name, comment, createdAt }) => (
-                <IonItem key={id}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <span>
-                    <strong>{name}:</strong> {comment}
-                    {createdAt && (
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                        {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt)}
-                        </div>
-                    )}
-                    </span>
-                    {user && (
-                    <IonButton color="danger" onClick={() => handleDeleteComment(id)}>
-                        Delete
-                    </IonButton>
-                    )}
-                </div>
-                </IonItem>
-            ))}
+          {comments.map(({ id, name, comment, createdAt }) => (
+            <IonItem key={id}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <span>
+                  <strong>{name}:</strong> {comment}
+                  {createdAt && (
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                      {new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt)}
+                    </div>
+                  )}
+                </span>
+                {isAdmin && (
+                  <IonButton color="danger" onClick={() => handleDeleteComment(id)}>
+                    Delete
+                  </IonButton>
+                )}
+              </div>
+            </IonItem>
+          ))}
         </IonList>
 
         {/* Home Button */}

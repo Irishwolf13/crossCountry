@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { IonButton } from '@ionic/react';
 import { auth, db } from '../firebase/config';
 import { collection, addDoc, getDocs, orderBy, query, onSnapshot, where } from 'firebase/firestore';
-import LocationModal from './LocationModal';
 import { useHistory } from 'react-router-dom';
+import LocationModal from './LocationModal';
 
 declare global {
   interface Window { initMap: () => void; }
@@ -21,7 +21,6 @@ interface ImageData {
   comments: string[];
   title: string;
   uuid: string;
-  approved: boolean;
 }
 
 const MapWithDirections: React.FC = () => {
@@ -33,15 +32,20 @@ const MapWithDirections: React.FC = () => {
   const [modalImages, setModalImages] = useState<ImageData[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
+  const [isAuthorizedUser, setIsAuthorizedUser] = useState(false); // New state
   const history = useHistory();
-
-  const goToApproval = () => {
-    history.push('/approval');
-  };
 
   useEffect(() => {
     const unsubscribeFromAuth = auth.onAuthStateChanged(user => {
       setIsLoggedIn(!!user);
+
+      // Check if the user email is the authorized one
+      const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+      if (user && user.email === adminEmail) {
+        setIsAuthorizedUser(true); // User is authorized
+      } else {
+        setIsAuthorizedUser(false); // User is not authorized
+      }
     });
 
     return () => unsubscribeFromAuth();
@@ -79,13 +83,12 @@ const MapWithDirections: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Only load the map if waypoints are available
     if (waypoints.length === 0) return;
 
     const initMap = () => {
       const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
         zoom: 6,
-        center: { lat: 41.850033, lng: -87.6500523 },
+        // center: { lat: 41.850033, lng: -87.6500523 },
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
@@ -351,15 +354,26 @@ const MapWithDirections: React.FC = () => {
 
   return (
     <>
-      <LocationModal isOpen={modalOpen} location={modalLocation} images={modalImages} waypointId={selectedWaypointId} onClose={() => setModalOpen(false)}/>
+      <LocationModal
+        isOpen={modalOpen}
+        location={modalLocation}
+        images={modalImages}
+        waypointId={selectedWaypointId}
+        onClose={() => setModalOpen(false)}
+      />
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
-      {isLoggedIn && (
+      {isLoggedIn && isAuthorizedUser && (
         <>
-          <IonButton onClick={goToApproval}>Approve Images</IonButton>
           <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
           <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
-          <input id="autocomplete-input" type="text" placeholder="Enter a location" value={newWaypoint} onChange={(e) => setNewWaypoint(e.target.value)}/>
+          <input 
+            id="autocomplete-input"
+            type="text"
+            placeholder="Enter a location"
+            value={newWaypoint}
+            onChange={(e) => setNewWaypoint(e.target.value)}
+          />
         </>
       )}
     </>

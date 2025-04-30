@@ -9,7 +9,6 @@ import PrivateRoute from './firebase/PrivateRoute';
 import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import Dashboard from './pages/Dashboard/Dashboard';
-import Approval from './pages/Approval/Approval';
 import MainMap from './pages/MainMap/MainMap';
 
 /* Core CSS required for Ionic components to work properly */
@@ -45,7 +44,6 @@ const App: React.FC = () => (
       <IonReactRouter>
         <IonRouterOutlet>
           <PrivateRoute exact path="/dashboard" component={Dashboard} />
-          <PrivateRoute exact path="/approval" component={Approval} />
           <PrivateRoute exact path="/uploadStuff" component={UploadPhoto} />
           <Route path="/signGuestBook" component={SignGuestBook} />
       
