@@ -150,3 +150,54 @@ export const deleteGuestComment = async (commentId: string) => {
     throw new Error("Could not delete guest comment");
   }
 };
+
+
+
+
+
+// Store the start time in Firestore
+export const storeStartTime = async (startTime: number, collectionName:string, documentId:string) => {
+  try {
+    await setDoc(doc(db, collectionName, documentId), { startTime });
+    console.log("Start time stored successfully!");
+  } catch (error) {
+    console.error("Error storing start time:", error);
+    throw new Error("Could not store start time");
+  }
+};
+
+// Store the stop time in Firestore
+export const storeStopTime = async (stopTime: number, collectionName:string, documentId:string) => {
+  try {
+    await setDoc(doc(db, collectionName, documentId), { stopTime }, { merge: true });
+    console.log("Stop time stored successfully!");
+  } catch (error) {
+    console.error("Error storing stop time:", error);
+    throw new Error("Could not store stop time");
+  }
+};
+
+// Retrieve both start and stop times from Firestore
+export const getTripTimes = async (collectionName: string, documentId: string) => {
+  try {
+    const docRef = doc(db, collectionName, documentId);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      
+      return {
+        startTime: data.startTime || null,
+        stopTime: data.stopTime || null
+      };
+    } else {
+      console.log("No trip data found!");
+      return { startTime: null, stopTime: null };
+    }
+  } catch (error) {
+    console.error("Error retrieving trip times:", error);
+    throw new Error("Could not retrieve trip times");
+  }
+};
+
+

@@ -1,0 +1,17 @@
+.tripTimer {
+    position: absolute;
+    z-index: 9999;
+    top: 1dvb;
+    left: 8px;
+    color: #000000;
+    background-color: #ffa500;
+    border-radius: 5px; /* Optional: adds rounded corners */
+    padding: 1px;
+    padding-left:5px;
+    padding-right: 5px;
+}
+
+.adminButton {
+    margin-right: 2px;
+    padding: 2px;
+}

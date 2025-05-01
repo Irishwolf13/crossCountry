@@ -4,24 +4,12 @@ import { auth, db } from '../firebase/config';
 import { collection, addDoc, getDocs, orderBy, query, onSnapshot, where } from 'firebase/firestore';
 import { useHistory } from 'react-router-dom';
 import LocationModal from './LocationModal';
+import MainTimer from '../components/MainTimer';
 
-declare global {
-  interface Window { initMap: () => void; }
-}
+declare global { interface Window { initMap: () => void; } }
 
-interface Waypoint {
-  location: string;
-  stopover: boolean;
-  id: string;
-}
-
-interface ImageData {
-  image: string;
-  likes: number;
-  comments: string[];
-  title: string;
-  uuid: string;
-}
+interface Waypoint { location: string; stopover: boolean; id: string;}
+interface ImageData { image: string; likes: number; comments: string[]; title: string; uuid: string;}
 
 const MapWithDirections: React.FC = () => {
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
@@ -32,7 +20,7 @@ const MapWithDirections: React.FC = () => {
   const [modalImages, setModalImages] = useState<ImageData[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
-  const [isAuthorizedUser, setIsAuthorizedUser] = useState(false); // New state
+  const [isAuthorizedUser, setIsAuthorizedUser] = useState(false);
   const history = useHistory();
 
   useEffect(() => {
@@ -118,16 +106,15 @@ const MapWithDirections: React.FC = () => {
               position: results[0].geometry.location,
               map: map,
               title: title,
+              zIndex: customIcon === secondToLastCustomIconUrl ? 2000 : 1000 // Higher zIndex for second-to-last
             };
       
-            // Check if a custom icon is provided and set its options
             if (customIcon) {
               markerOptions.icon = {
                 url: customIcon,
-                scaledSize: new google.maps.Size(30, 40), // Adjust to match default icon size
-                anchor: new google.maps.Point(14, 35),   // Adjust the anchor point
+                scaledSize: new google.maps.Size(30, 40),
+                anchor: new google.maps.Point(14, 35)
               };
-              markerOptions.zIndex = 1000;
             }
       
             const marker = new window.google.maps.Marker(markerOptions);
@@ -363,10 +350,12 @@ const MapWithDirections: React.FC = () => {
       />
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
+      <MainTimer collectionName={`startTripTimes`} documentId={'danAndUncleJohn'} />
+      {/* <TimeOnRoad collectionName={'startTripTimes'} documentId={'timeOnRoad'} /> */}
       {isLoggedIn && isAuthorizedUser && (
         <>
-          <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
           <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
+          <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
           <input 
             id="autocomplete-input"
             type="text"

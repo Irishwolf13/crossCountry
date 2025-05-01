@@ -2,7 +2,7 @@ import React from 'react';
 import { IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './MainMap.css';
-import '../../theme/variables.css'
+import '../../theme/variables.css';
 import MapWithDirections from '../../components/MapComponent';
 
 const MainMap: React.FC = () => {
@@ -19,6 +19,7 @@ const MainMap: React.FC = () => {
           <IonButtons slot="start">
             <IonButton onClick={goToHome}>Home</IonButton>
           </IonButtons>
+          <IonTitle>Map</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>

@@ -49,8 +49,8 @@ const Home: React.FC = () => {
       </IonHeader>
       <IonContent fullscreen>
         <IonButton onClick={() => goToPage('map')}>Tour Map</IonButton>
-        <IonButton onClick={() => goToPage('signGuestBook')} className="bottom-button">Sign Guest Book</IonButton>
-        <IonButton onClick={() => goToPage('musicPlaylists')}>Music Playlists</IonButton>
+        <IonButton onClick={() => goToPage('musicPlaylists')}>Road Tunes</IonButton>
+        <IonButton onClick={() => goToPage('signGuestBook')} className="bottom-button">Guestbook</IonButton>
 
         {isLoggedIn ? (
           <div>

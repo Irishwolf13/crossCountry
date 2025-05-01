@@ -89,7 +89,7 @@ const SignGuestBook: React.FC = () => {
     }
   };
 
-  const containsProfanity = (text) => {
+  const containsProfanity = (text:string) => {
     const profaneWords = [
       'fuck',
       'shit',
