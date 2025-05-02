@@ -27,7 +27,7 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      history.push('/');
+      history.push('/home');
     } catch (error) {
       console.error('Error logging in:', error);
     }
@@ -42,7 +42,7 @@ const Login: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={goToHome}>Home</IonButton>
+            <IonButton onClick={goToHome}>Cancel</IonButton>
           </IonButtons>
           <IonTitle>Admin Login</IonTitle>
         </IonToolbar>

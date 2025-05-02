@@ -8,7 +8,7 @@ const MusicPlaylists: React.FC = () => {
   const history = useHistory();
 
   const goToHome = () => {
-    history.push('/');
+    history.push('/home');
   };
 
   return (
