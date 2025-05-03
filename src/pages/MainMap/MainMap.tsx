@@ -1,5 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './MainMap.css';
 import '../../theme/variables.css';
@@ -10,6 +18,13 @@ const MainMap: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [volume, setVolume] = useState(0.5); // Initial volume set to 50%
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentSongIndex, setCurrentSongIndex] = useState(0);
+
+  // Array of song URLs
+  const songs = [
+    'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/music%2FOnTheRoadAgain.mp3?alt=media&token=6c0f313f-8f11-4690-a306-0e77fd51d9c7',
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+  ];
 
   const goToHome = () => {
     if (audioRef.current) audioRef.current.pause();
@@ -20,6 +35,7 @@ const MainMap: React.FC = () => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume; // Set initial volume
+      audioRef.current.src = songs[currentSongIndex]; // Set the first song
       audioRef.current.play()
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false)); // Catch errors if autoplay is blocked
@@ -30,7 +46,7 @@ const MainMap: React.FC = () => {
         }
       };
     }
-  }, []);
+  }, [currentSongIndex]); // Re-run effect when song changes
 
   const togglePlayPause = () => {
     if (audioRef.current) {
@@ -52,6 +68,18 @@ const MainMap: React.FC = () => {
     }
   };
 
+  const handleNextSong = () => {
+    if (currentSongIndex < songs.length - 1) {
+      setCurrentSongIndex(currentSongIndex + 1);
+    } else {
+      setCurrentSongIndex(0); // Loop back to the first song if at the end
+    }
+  };
+
+  const handleSongEnd = () => {
+    handleNextSong(); // Automatically play the next song on audio end
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -60,10 +88,11 @@ const MainMap: React.FC = () => {
             <IonButton onClick={goToHome}>Home</IonButton>
           </IonButtons>
           <IonButtons className='volumeSpacer' slot='end'>
-          <IonButton onClick={togglePlayPause}>
-            {isPlaying ? 'Pause Music' : 'Play Music'}
-          </IonButton>
-          <input type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolumeChange} />
+            <IonButton onClick={togglePlayPause}>
+              {isPlaying ? 'Pause Music' : 'Play Music'}
+            </IonButton>
+            <IonButton onClick={handleNextSong}>Next Song</IonButton>
+            <input type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolumeChange} />
           </IonButtons>
         </IonToolbar>
       </IonHeader>
@@ -87,10 +116,8 @@ const MainMap: React.FC = () => {
           />
           <MapWithDirections />
 
-          {/* Audio player */}
-          <audio ref={audioRef} src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" />
-
-
+          {/* Audio player with onEnded event */}
+          <audio ref={audioRef} onEnded={handleSongEnd} />
         </div>
       </IonContent>
     </IonPage>

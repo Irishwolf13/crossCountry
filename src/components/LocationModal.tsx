@@ -15,7 +15,8 @@ import 'swiper/css/effect-fade';
 import 'swiper/css/bundle';
 import { uploadImage, updateDocument } from '../firebase/firebaseController';
 import ReactPlayer from 'react-player';
-import { useAuth } from '../firebase/AuthContext'; // Import AuthContext
+import { useAuth } from '../firebase/AuthContext';
+import './LocationModal.css'
 
 interface MediaData {
   image?: string;
@@ -135,28 +136,28 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
 
   return (
     <>
-      <IonModal isOpen={isOpen} onDidDismiss={onClose}>
+      <IonModal isOpen={isOpen} onDidDismiss={onClose} className="fullScreenModal">
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
               <IonButton onClick={onClose}>Close</IonButton>
             </IonButtons>
+            <div className='frank2'>{location ? `${location}` : 'Unknown'}</div>
             {isAdmin && (
-              <IonButtons slot="end">
+              <IonButtons>
                 <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
               </IonButtons>
             )}
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          {location ? `${location}` : 'Unknown'}
-          <input
+          {/* <input
             type="file"
             accept="image/*"
             ref={fileInputRef}
             style={{ display: 'none' }}
             onChange={handleFileChange}
-          />
+          /> */}
 
           {images.length > 0 ? (
             <Swiper
@@ -174,9 +175,29 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               className="mySwiper"
             >
               {images.map((item, index) => (
-                <SwiperSlide key={index}>
-                  <div>
-                    {isEditing === index ? (
+                <div>
+
+                  <SwiperSlide key={index}>
+                    <div>
+
+                      {item.image ? (
+                        <img src={item.image} alt={`Image ${index + 1}`} className='frank' />
+                      ) : item.video ? (
+                        <>
+                          <ReactPlayer 
+                            url={item.video}
+                            playing={!!videoPlayingStates[index]}
+                            onEnded={() => handleVideoEnded(index)}
+                            width='100%'
+                            />
+                          <div className="playButton">
+                            <IonButton onClick={() => togglePlayPause(index)}>
+                              {videoPlayingStates[index] ? 'Pause' : 'Play'}
+                            </IonButton>
+                          </div>
+                        </>
+                      ) : null}
+                    {/* {isEditing === index ? (
                       <textarea
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
@@ -191,32 +212,16 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
                       >
                         {item.title}
                       </p>
-                    )}
-
-                    {item.image ? (
-                      <img src={item.image} alt={`Image ${index + 1}`} style={{ maxWidth: '100%' }} />
-                    ) : item.video ? (
-                      <>
-                        <ReactPlayer 
-                          url={item.video}
-                          playing={!!videoPlayingStates[index]}
-                          onEnded={() => handleVideoEnded(index)}
-                          width='100%'
-                        />
-                        <div className="playButton">
-                          <IonButton onClick={() => togglePlayPause(index)}>
-                            {videoPlayingStates[index] ? 'Pause' : 'Play'}
-                          </IonButton>
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                </SwiperSlide>
+                    )} */}
+                    </div>
+                  </SwiperSlide>
+                </div>
               ))}
             </Swiper>
           ) : (
             <p>No media available for this location.</p>
           )}
+          <div className='centerTitle'>Swipe left or right to view more!</div>
         </IonContent>
       </IonModal>
 
