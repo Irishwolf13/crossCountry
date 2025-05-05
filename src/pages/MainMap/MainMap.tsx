@@ -85,38 +85,35 @@ const MainMap: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={goToHome}>Home</IonButton>
+            <IonButton className="mapPageButton" onClick={goToHome}>Home</IonButton>
           </IonButtons>
           <IonButtons className='volumeSpacer' slot='end'>
-            <IonButton onClick={togglePlayPause}>
-              {isPlaying ? 'Pause Music' : 'Play Music'}
+            {/* <input type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolumeChange} /> */}
+            <IonButton className="mapPageButton" onClick={togglePlayPause}>
+              {isPlaying ? 'Pause' : 'Play'}
             </IonButton>
-            <IonButton onClick={handleNextSong}>Next Song</IonButton>
-            <input type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolumeChange} />
+            <IonButton className="mapPageButton" onClick={handleNextSong}>Next Song</IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent>
         <div className="map-container">
-          {/* Your overlay images */}
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FHackTheHighway.png?alt=media&token=d1ae4112-a37b-4ba6-a04a-916d662270f1"
             alt="Overlay"
             className="overlay-image"
-          />
+            />
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FdanUncleJohn.png?alt=media&token=6fcb4820-8d4e-402e-9b87-62e487ca88dc"
             alt="Overlay"
             className="overlay-danJohn"
-          />
+            />
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fdriving2.png?alt=media&token=71866b16-0bb7-4ede-86be-9aca9083796a"
             alt="Overlay"
             className="overlay-car"
-          />
+            />
           <MapWithDirections />
-
-          {/* Audio player with onEnded event */}
           <audio ref={audioRef} onEnded={handleSongEnd} />
         </div>
       </IonContent>

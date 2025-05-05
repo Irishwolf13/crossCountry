@@ -1,3 +1,56 @@
 .volumeSpacer {
     margin-right: 10px;
 }
+
+.overlay-image {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    max-height: 10vh; /* Set maximum height */
+    width: auto;       /* Maintain aspect ratio by allowing automatic width calculation */
+    z-index: 1;        /* Ensure the image appears above the map */
+}
+
+.overlay-danJohn {
+    position: absolute;
+    top: 66vh;
+    left: 65px;
+    max-height: 7vh;
+    width: auto;     
+    z-index: 10;      
+}
+
+.overlay-car {
+    position: absolute;
+    top: 63vh;
+    left: 0px;
+    max-height: 10vh;
+    width: auto;     
+    z-index: 1;      
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.bottom-button {
+    margin-top: auto;
+}
+.mapPageButton {
+    --background: #000;
+    --background-hover: #ffce72;
+    --background-activated: #ffce72;
+    --background-focused: #ffce72;
+    --color: #f7870f;
+    --border-radius: 10px;
+    --border-color: #f7870f;
+    --border-style: solid;
+    --border-width: 1px;
+    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
+    --padding-top: 10px;
+    --padding-bottom: 10px;
+    margin-right: auto;
+    margin-left: auto;
+    width: 100px;
+}

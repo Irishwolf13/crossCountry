@@ -351,6 +351,11 @@ const MapWithDirections: React.FC = () => {
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
       <MainTimer collectionName={`startTripTimes`} documentId={'danAndUncleJohn'} />
+      <div className='directionText'>
+        <div>Click on Waypoints to</div>
+        <div>see images and videos!</div>
+      </div>
+
       {/* <TimeOnRoad collectionName={'startTripTimes'} documentId={'timeOnRoad'} /> */}
       {isLoggedIn && isAuthorizedUser && (
         <>

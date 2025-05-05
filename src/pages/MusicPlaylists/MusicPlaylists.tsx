@@ -16,9 +16,9 @@ const MusicPlaylists: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={goToHome}>Home</IonButton>
+            <IonButton className="mapPageButton" onClick={goToHome}>Home</IonButton>
           </IonButtons>
-          <IonTitle>Music Playlist Page</IonTitle>
+          <IonTitle  style={{color: '#f7870f'}}>Road Tunes</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>

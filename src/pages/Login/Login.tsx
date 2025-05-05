@@ -42,7 +42,7 @@ const Login: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton onClick={goToHome}>Cancel</IonButton>
+            <IonButton className="mapPageButton" onClick={goToHome}>Cancel</IonButton>
           </IonButtons>
           <IonTitle>Admin Login</IonTitle>
         </IonToolbar>
@@ -62,7 +62,7 @@ const Login: React.FC = () => {
           type="password"
           required
         />
-        <IonButton onClick={handleLogin}>Admin Login</IonButton>
+        <IonButton className="addCommentButton" onClick={handleLogin}>Admin Login</IonButton>
       </IonContent>
     </IonPage>
   );

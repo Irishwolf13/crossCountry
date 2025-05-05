@@ -4,3 +4,16 @@
     justify-content: center;
     text-align: center;
 }
+
+.addCommentButton {
+    --background: #f7870f;
+    --background-hover: #ffce72;
+    --background-activated: #ffce72;
+    --background-focused: #ffce72;
+    --color: #000;
+    --border-radius: 10px;
+    --border-color: #000;
+    --border-style: solid;
+    --border-width: 1px;
+    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
+}

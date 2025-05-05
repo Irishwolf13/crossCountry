@@ -140,7 +140,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
         <IonHeader>
           <IonToolbar>
             <IonButtons slot="start">
-              <IonButton onClick={onClose}>Close</IonButton>
+              <IonButton className="mapPageButton" onClick={onClose}>Close</IonButton>
             </IonButtons>
             <div className='frank2'>{location ? `${location}` : 'Unknown'}</div>
             {isAdmin && (

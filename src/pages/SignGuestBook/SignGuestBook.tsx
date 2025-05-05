@@ -125,11 +125,11 @@ const SignGuestBook: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons>
-            <IonButton onClick={goToHome} color="primary">
+            <IonButton className="mapPageButton" onClick={goToHome}>
               Home
             </IonButton>
           </IonButtons>
-          <IonTitle>Guest Book</IonTitle>
+          <IonTitle style={{color: '#f7870f'}}>Guest Book</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -144,7 +144,7 @@ const SignGuestBook: React.FC = () => {
             placeholder="Your Comment"
             onIonInput={(e) => setComment(e.detail.value!)}
           />
-          <IonButton onClick={handleAddComment}>Add Comment</IonButton>
+          <IonButton className="addCommentButton" onClick={handleAddComment}>Add Comment</IonButton>
           {profanityWarning && (
             <div style={{ color: 'red', marginTop: '10px' }}>
               {profanityWarning}

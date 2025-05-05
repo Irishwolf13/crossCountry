@@ -41,28 +41,40 @@ const Splash: React.FC = () => {
   };
 
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Hack the Highway!</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        {isLoggedIn ? (
-          <div>
-            {isAuthorizedUser && (
-              <IonButton onClick={() => goToPage('dashboard')} className="bottom-button">Dashboard</IonButton>
-            )}
-            <IonButton onClick={handleLogout} className="bottom-button">Logout</IonButton>
-          </div>
-        ) : (
-          <IonButton onClick={() => goToPage('dashboard')} className="bottom-button">Admin Login</IonButton>
-        )}
-        
-        {/* Optionally keep the welcome button */}
-        <IonButton onClick={() => goToPage('home')}>Enter Hack The Highway</IonButton>
-      </IonContent>
-    </IonPage>
+<IonPage>
+  <IonContent>
+    <div className="image-container">
+      <img 
+        src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FbackdropSky1.jpg?alt=media&token=c76a40ab-01ea-4948-b9c1-d0b97956b9e1" 
+        alt="Background" 
+        className="background-image"
+      />
+    </div>
+    <div className="wrapper">
+      <div className="hackTheHighwaySign">
+        <img
+          src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FHackTheHighway.png?alt=media&token=d1ae4112-a37b-4ba6-a04a-916d662270f1"
+          alt="Hack the Highway sign"
+        />
+      </div>
+    </div>
+    <div className='splashButtonContainer'>
+      <IonButton className='EnterButton' onClick={() => goToPage('home')}>Enter Hack The Highway</IonButton>
+      {isLoggedIn ? (
+        <div>
+          {isAuthorizedUser && (
+            <IonButton onClick={() => goToPage('dashboard')}  className='EnterButton'>Dashboard</IonButton>
+          )}
+          <IonButton onClick={handleLogout}  className='EnterButton'>Logout</IonButton>
+        </div>
+      ) : (
+        <IonButton onClick={() => goToPage('dashboard')}  className='EnterButton2'>Admin Login</IonButton>
+      )}
+    </div>
+    
+  </IonContent>
+</IonPage>
+
   );
 };
 

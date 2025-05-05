@@ -16,15 +16,13 @@ const DeepThoughts: React.FC = () => {
       <IonHeader>
         <IonToolbar>
             <IonButtons slot="start">
-              <IonButton onClick={goToHome}>Home</IonButton>
+              <IonButton className="mapPageButton" onClick={goToHome}>Home</IonButton>
             </IonButtons>
-          <IonTitle>Deep Thoughts</IonTitle>
+          <IonTitle style={{color: '#f7870f'}}>Deep Thoughts</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-      <div className="button-container">
-        By Jack Handy
-      </div>
+      <div  style={{color: '#f7870f'}}> By Jack Handy </div>
       </IonContent>
     </IonPage>
   );
