@@ -11,7 +11,12 @@ import SuperPowers from '../../components/SuperPowers';
 const DeepThoughts: React.FC = () => {
   const history = useHistory();
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-
+  const images = [
+    "https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FcolbertQuestion.jpg?alt=media&token=221be1e0-57c2-4e7d-b3ec-9b97ae537613",
+    "https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FsuperPowersCoverSM.png?alt=media&token=e63de09e-8038-4e65-8474-0776dcc8681a",
+    "https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FactionCoverSM.png?alt=media&token=a3ae3e1e-7601-418f-a334-695883756b6d",
+    "https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FcomedyCoverSM.png?alt=media&token=3355db20-347d-4589-9c44-2e38ebe9a0df"
+  ];
   const goToHome = () => {
     history.push('/home');
   };
@@ -26,10 +31,10 @@ const DeepThoughts: React.FC = () => {
 
   // Example content for modals
   const modalContents = [
-    { title: 'Colbert Questionert', description: 'This is the description for the first image.', component: <Colbert /> },
-    { title: 'Favorite Action Movies', description: 'Description for the second image.', component: <SuperPowers />  },
-    { title: 'Favorite Comedy Movies', description: 'Description for the third image.', component: <ActionMovies />},
-    { title: 'Super Hero Powers', description: 'Description for the fourth image.', component: <ComedyMovies /> }
+    { title: 'Colbert Questionert', description: '', component: <Colbert /> },
+    { title: 'Super Powers', description: '', component: <SuperPowers />  },
+    { title: 'Action Movies', description: '', component: <ActionMovies />},
+    { title: 'Comedy Movies', description: '', component: <ComedyMovies /> }
   ];
 
   return (
@@ -56,11 +61,11 @@ const DeepThoughts: React.FC = () => {
             className='colbertHolder' 
             onClick={() => handleOpenModal(index)}
           >
-            <img 
-              src={index === 0 ? "https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FcolbertQuestion.jpg?alt=media&token=221be1e0-57c2-4e7d-b3ec-9b97ae537613" : `https://placehold.co/200x150`} 
-              alt={modalContents[index].title}
-              className='colbertQuestionert'
-            />
+<img 
+  src={images[index]} 
+  alt={modalContents[index].title}
+  className='colbertQuestionert'
+/>
           </button>
         ))}
         
