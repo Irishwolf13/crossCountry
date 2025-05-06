@@ -92,7 +92,7 @@ const MainMap: React.FC = () => {
             <IonButton className="mapPageButton" onClick={togglePlayPause}>
               {isPlaying ? 'Pause' : 'Play'}
             </IonButton>
-            <IonButton className="mapPageButton" onClick={handleNextSong}>Next Song</IonButton>
+            <IonButton className="mapPageButton" onClick={handleNextSong}>Skip</IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>

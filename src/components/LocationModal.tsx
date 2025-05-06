@@ -142,22 +142,25 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
             <IonButtons slot="start">
               <IonButton className="mapPageButton" onClick={onClose}>Close</IonButton>
             </IonButtons>
-            <div className='frank2'>{location ? `${location}` : 'Unknown'}</div>
+            <div className='frank2'>{location ? `${location}` : 'Unknown'}
             {isAdmin && (
               <IonButtons>
-                <IonButton onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
+                <IonButton className="mapPageButton" onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
               </IonButtons>
             )}
+            </div>
           </IonToolbar>
         </IonHeader>
         <IonContent>
-          {/* <input
+        {isAdmin && (
+          <input
             type="file"
             accept="image/*"
             ref={fileInputRef}
             style={{ display: 'none' }}
             onChange={handleFileChange}
-          /> */}
+          />
+        )}
 
           {images.length > 0 ? (
             <Swiper

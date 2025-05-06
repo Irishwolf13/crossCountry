@@ -17,3 +17,22 @@
     --border-width: 1px;
     --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
 }
+
+.commentListHolder {
+    display: flex;
+    margin-left: 20px;
+    margin-right: 20px;
+    height: 65vh;
+}
+
+.commentList {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+.commentItem {
+    width: 96%;
+}

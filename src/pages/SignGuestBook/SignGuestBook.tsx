@@ -128,11 +128,18 @@ const SignGuestBook: React.FC = () => {
             <IonButton className="mapPageButton" onClick={goToHome}>
               Home
             </IonButton>
+            <IonTitle style={{color: '#f7870f'}}>Sign the Guest Book</IonTitle>
           </IonButtons>
-          <IonTitle style={{color: '#f7870f'}}>Guest Book</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
+      <IonContent>
+      <div className="home-container">
+        <img 
+          src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FbackdropSky2.jpg?alt=media&token=c21edae9-5e3a-4d67-8b1c-2b5cb058d304" 
+          alt="Background" 
+          className="home-background-image"
+        />
+      </div>
         <IonCard className="centered-card">
           <IonInput
             value={name}
@@ -151,44 +158,51 @@ const SignGuestBook: React.FC = () => {
             </div>
           )}
         </IonCard>
-
-        <IonList>
-          {comments
-            .slice()
-            //@ts-ignore
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .map(({ id, name, comment, createdAt }) => (
-              <IonItem key={id}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                  }}
-                >
-                  <span>
-                    <strong>{name}:</strong> {comment}
-                    {createdAt && (
-                      <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                        {new Intl.DateTimeFormat('en-US', {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        }).format(new Date(createdAt))}
-                      </div>
+        <div className='commentListHolder'>
+          <IonList className='commentList'>
+            {comments
+              .slice()
+              //@ts-ignore
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .map(({ id, name, comment, createdAt }) => (
+                <IonItem key={id} className='commentItem'>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                    }}
+                  >
+                    <span style={{ 
+                      display: 'block', 
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word', 
+                      wordBreak: 'break-word',
+                      color: '#f7870f'
+                    }}>
+                      <strong>{name}:</strong> {comment}
+                      {createdAt && (
+                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                          {new Intl.DateTimeFormat('en-US', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          }).format(new Date(createdAt))}
+                        </div>
+                      )}
+                    </span>
+                    {isAdmin && (
+                      <IonButton
+                        color="danger"
+                        onClick={() => handleDeleteComment(id)}
+                      >
+                        Delete
+                      </IonButton>
                     )}
-                  </span>
-                  {isAdmin && (
-                    <IonButton
-                      color="danger"
-                      onClick={() => handleDeleteComment(id)}
-                    >
-                      Delete
-                    </IonButton>
-                  )}
-                </div>
-              </IonItem>
-            ))}
-        </IonList>
+                  </div>
+                </IonItem>
+              ))}
+          </IonList>
+        </div>
       </IonContent>
     </IonPage>
   );
