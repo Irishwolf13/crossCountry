@@ -1,13 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import {
-  IonModal,
-  IonContent,
-  IonHeader,
-  IonToolbar,
-  IonButton,
-  IonToast,
-  IonButtons,
-} from '@ionic/react';
+import { IonModal, IonContent, IonHeader, IonToolbar, IonButton, IonToast, IonButtons } from '@ionic/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCube, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -18,31 +10,14 @@ import ReactPlayer from 'react-player';
 import { useAuth } from '../firebase/AuthContext';
 import './LocationModal.css'
 
-interface MediaData {
-  image?: string;
-  video?: string;
-  likes: number;
-  comments: string[];
-  title: string;
-  uuid: string;
-}
-
-interface LocationModalProps {
-  isOpen: boolean;
-  location: string;
-  images: MediaData[];
-  waypointId: string | null;
-  onClose: () => void;
-}
+interface MediaData { image?: string; video?: string; likes: number; comments: string[]; title: string; uuid: string;}
+interface LocationModalProps { isOpen: boolean; location: string; images: MediaData[]; waypointId: string | null; onClose: () => void;}
 
 const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images: initialImages, waypointId, onClose }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<MediaData[]>(initialImages);
   const [toastMsg, setToastMsg] = useState<string>('');
-  const [isEditing, setIsEditing] = useState<number | null>(null);
-  const [editText, setEditText] = useState<string>('');
   const [videoPlayingStates, setVideoPlayingStates] = useState<{ [key: number]: boolean }>({});
-  
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
@@ -97,29 +72,6 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
     }
   };
 
-  const handleEditClick = (index: number, currentTitle: string) => {
-    setIsEditing(index);
-    setEditText(currentTitle);
-  };
-
-  const handleSaveBlur = async (index: number) => {
-    if (waypointId && index !== null) {
-      const updatedImages = [...images];
-      updatedImages[index].title = editText;
-
-      try {
-        // @ts-ignore
-        await updateDocument('myWaypoints', waypointId, { images: updatedImages });
-        setImages(updatedImages);
-        setToastMsg("Title updated successfully!");
-      } catch (error) {
-        console.error('Error updating title:', error);
-        setToastMsg("Could not update title.");
-      }
-    }
-    setIsEditing(null);
-  };
-
   const togglePlayPause = (index: number) => {
     setVideoPlayingStates((prevState) => ({
       ...prevState,
@@ -153,13 +105,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
         </IonHeader>
         <IonContent>
         {isAdmin && (
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
+          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
         )}
 
           {images.length > 0 ? (
@@ -167,12 +113,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               effect={'cube'}
               loop={true}
               grabCursor={true}
-              cubeEffect={{
-                shadow: true,
-                slideShadows: true,
-                shadowOffset: 20,
-                shadowScale: 0.94,
-              }}
+              cubeEffect={{ shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 }}
               pagination={true}
               modules={[EffectCube, Pagination]}
               className="mySwiper"
@@ -200,22 +141,6 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
                           </div>
                         </>
                       ) : null}
-                    {/* {isEditing === index ? (
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        rows={3}
-                        style={{ width: '100%', resize: 'none', overflowWrap: 'break-word' }}
-                        onBlur={() => handleSaveBlur(index)}
-                      />
-                    ) : (
-                      <p
-                        onClick={() => handleEditClick(index, item.title)}
-                        style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word', cursor: 'pointer' }}
-                      >
-                        {item.title}
-                      </p>
-                    )} */}
                     </div>
                   </SwiperSlide>
                 </div>
@@ -227,14 +152,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           <div className='centerTitle'>Swipe left or right to view more!</div>
         </IonContent>
       </IonModal>
-
-      <IonToast
-        isOpen={!!toastMsg}
-        onDidDismiss={() => setToastMsg('')}
-        message={toastMsg}
-        duration={2000}
-        position="top"
-      />
+      <IonToast isOpen={!!toastMsg} onDidDismiss={() => setToastMsg('')} message={toastMsg} duration={2000} position="top"/>
     </>
   );
 };

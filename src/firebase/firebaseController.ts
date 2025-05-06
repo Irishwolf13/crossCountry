@@ -1,5 +1,5 @@
 // firebaseController.ts
-import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, addDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion, addDoc, collection, getDocs, serverTimestamp, query, where } from "firebase/firestore";
 import { ref, getDownloadURL, uploadBytes } from "firebase/storage";
 import { db, storage } from "./config";
 import { UserInfo } from "./types";
@@ -103,7 +103,31 @@ export const uploadVideo = async (file: File): Promise<{ downloadURL: string; un
     throw new Error("Could not upload video");
   }
 };
+// Function to update the video URL based on a document's name field in the Firebase collection
+export const updateVideoURL = async (collectionName: string, documentName: string, videoURL: string) => {
+  try {
+    const q = query(
+      collection(db, collectionName),
+      where("name", "==", documentName)
+    );
+    
+    const querySnapshot = await getDocs(q);
 
+    if (querySnapshot.empty) {
+      console.error("No matching documents found");
+      throw new Error(`No document with name: ${documentName}`);
+    }
+
+    // Assuming there's only one document with the given name
+    const docRef = querySnapshot.docs[0].ref;
+
+    await updateDoc(docRef, { video: videoURL });
+    console.log("Video URL updated successfully in document named:", documentName);
+  } catch (error) {
+    console.error("Error updating video URL:", error);
+    throw new Error("Could not update video URL");
+  }
+};
 
 
 
@@ -201,3 +225,82 @@ export const getTripTimes = async (collectionName: string, documentId: string) =
 };
 
 
+
+export const fetchQuestionsAndVideoByName = async (collectionName: string, name: string) => {
+  try {
+    const q = query(collection(db, collectionName), where("name", "==", name));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.log("No matching documents found!");
+      return { questions: [], videoURL: null };
+    }
+
+    let questionsList: Array<string> = [];
+    let videoURL: string | null = null;
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      
+      // Assuming questions are now a flat array
+      if (Array.isArray(data.questions)) {
+        questionsList = [...questionsList, ...data.questions];
+      }
+      
+      if (typeof data.video === 'string') {
+        videoURL = data.video;
+      }
+    });
+
+    return { questions: questionsList, videoURL };
+  } catch (error) {
+    console.error("Error fetching questions and video by name:", error);
+    throw new Error("Could not fetch questions and video");
+  }
+};
+
+export const updateAnswers = async (collectionName: string, nameField: string, newAnswers: Array<string>) => {
+  try {
+    const q = query(collection(db, collectionName), where("name", "==", nameField));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error(`No document found with name: ${nameField}`);
+    }
+
+    const docRef = querySnapshot.docs[0].ref;
+
+    // Update should match the new structure
+    await updateDoc(docRef, {
+      questions: newAnswers // Ensure this corresponds to your new array structure
+    });
+
+    console.log("Document successfully updated!");
+  } catch (error) {
+    console.error("Error updating document: ", error);
+    throw new Error("Could not update answers");
+  }
+};
+
+export const addQuestionToDocument = async (collectionName: string, nameField: string, newQuestion: string) => {
+  try {
+    const q = query(collection(db, collectionName), where("name", "==", nameField));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error(`No document found with name: ${nameField}`);
+    }
+
+    const docRef = querySnapshot.docs[0].ref;
+
+    // Use arrayUnion to add a new question to the existing questions array
+    await updateDoc(docRef, {
+      questions: arrayUnion(newQuestion)
+    });
+
+    console.log("New question added successfully!");
+  } catch (error) {
+    console.error("Error adding new question: ", error);
+    throw new Error("Could not add new question");
+  }
+};
