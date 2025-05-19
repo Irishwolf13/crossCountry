@@ -23,14 +23,14 @@
     margin-left: 20px;
     margin-right: 20px;
     height: 65vh;
+    overflow-y:scroll;
+    flex-direction: column;
 }
 
 .commentList {
     width: 100%;
-    display: flex;
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
 }
 
 .commentItem {
