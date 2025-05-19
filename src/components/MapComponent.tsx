@@ -106,7 +106,9 @@ const MapWithDirections: React.FC = () => {
               position: results[0].geometry.location,
               map: map,
               title: title,
-              zIndex: customIcon === secondToLastCustomIconUrl ? 2000 : 1000 // Higher zIndex for second-to-last
+              // zIndex: customIcon === secondToLastCustomIconUrl ? 2000 : 1000 
+              zIndex: customIcon === destinationCustomIconUrl ? 2000 : 1000 
+              // destinationCustomIconUrl
             };
       
             if (customIcon) {
@@ -147,13 +149,15 @@ const MapWithDirections: React.FC = () => {
       };
 
       // Custom icon URLs
-      const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
+      // const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
       const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f';
       const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
 
       // Change the marker icon specifically for the second-to-last waypoint
       const waypointForCustomIcon = waypoints[waypoints.length - 2];
-      setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
+      // frank
+      // setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
+      setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id);
 
       // Set custom icon for the last waypoint
       setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);

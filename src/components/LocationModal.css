@@ -32,3 +32,8 @@
     max-height: 50vh; 
   }
 }
+
+.mySwiper {
+  height: 80vh;
+  background-color: rgb(41, 41, 41);
+}

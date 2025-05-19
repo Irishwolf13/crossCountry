@@ -110,12 +110,12 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
 
           {images.length > 0 ? (
             <Swiper
-              effect={'cube'}
+              // effect={'cube'}
               loop={true}
               grabCursor={true}
-              cubeEffect={{ shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 }}
+              // cubeEffect={{ shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 }}
               pagination={true}
-              modules={[EffectCube, Pagination]}
+              modules={[Pagination]}
               className="mySwiper"
             >
               {images.map((item, index) => (

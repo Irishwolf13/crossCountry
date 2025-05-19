@@ -5,8 +5,7 @@ import {
   IonContent,
   IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
+  IonToolbar
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import './MainMap.css';
@@ -35,10 +34,7 @@ const MainMap: React.FC = () => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume; // Set initial volume
-      audioRef.current.src = songs[currentSongIndex]; // Set the first song
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false)); // Catch errors if autoplay is blocked
+      audioRef.current.src = songs[currentSongIndex]; // Set the current song
 
       return () => {
         if (audioRef.current) {
@@ -46,13 +42,12 @@ const MainMap: React.FC = () => {
         }
       };
     }
-  }, [currentSongIndex]); // Re-run effect when song changes
+  }, [currentSongIndex, volume]);
 
   const togglePlayPause = () => {
     if (audioRef.current) {
       if (audioRef.current.paused) {
-        audioRef.current.play();
-        setIsPlaying(true);
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       } else {
         audioRef.current.pause();
         setIsPlaying(false);
@@ -69,11 +64,7 @@ const MainMap: React.FC = () => {
   };
 
   const handleNextSong = () => {
-    if (currentSongIndex < songs.length - 1) {
-      setCurrentSongIndex(currentSongIndex + 1);
-    } else {
-      setCurrentSongIndex(0); // Loop back to the first song if at the end
-    }
+    setCurrentSongIndex((prevIndex) => (prevIndex + 1) % songs.length);
   };
 
   const handleSongEnd = () => {
@@ -102,17 +93,17 @@ const MainMap: React.FC = () => {
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FHackTheHighway.png?alt=media&token=d1ae4112-a37b-4ba6-a04a-916d662270f1"
             alt="Overlay"
             className="overlay-image"
-            />
+          />
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FdanUncleJohn.png?alt=media&token=6fcb4820-8d4e-402e-9b87-62e487ca88dc"
             alt="Overlay"
             className="overlay-danJohn"
-            />
+          />
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fdriving2.png?alt=media&token=71866b16-0bb7-4ede-86be-9aca9083796a"
             alt="Overlay"
             className="overlay-car"
-            />
+          />
           <MapWithDirections />
           <audio ref={audioRef} onEnded={handleSongEnd} />
         </div>
