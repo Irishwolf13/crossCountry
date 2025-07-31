@@ -86,10 +86,12 @@ const Home: React.FC = () => {
           </div>
         </div>
         <div className='home-ButtonHolder'>
-          <IonButton onClick={() => goToPage('map')} className="HomePageButton">Tour Map & Photos</IonButton>
           <IonButton onClick={() => goToPage('signGuestBook')} className="HomePageButton">Sign Guestbook</IonButton>
           <IonButton onClick={() => goToPage('musicPlaylists')} className="HomePageButton">Road Tunes</IonButton>
-          <IonButton onClick={() => goToPage('deepThoughts')} className="HomePageButton">Deep Thoughts</IonButton>
+          <br></br>
+          <IonButton onClick={() => goToPage('map')} className="HomePageButton">Tour Maps</IonButton>
+          <br></br>
+          {/* <IonButton onClick={() => goToPage('deepThoughts')} className="HomePageButton">Deep Thoughts</IonButton> */}
         </div>
       </IonContent>
     </IonPage>

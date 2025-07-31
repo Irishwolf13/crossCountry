@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton } from '@ionic/react';
+import { IonButton, useIonViewDidLeave, useIonViewWillEnter } from '@ionic/react';
 import { auth, db } from '../firebase/config';
 import { collection, addDoc, getDocs, orderBy, query, onSnapshot, where } from 'firebase/firestore';
-import { useHistory } from 'react-router-dom';
+
 import LocationModal from './LocationModal';
 import MainTimer from '../components/MainTimer';
 
-declare global { interface Window { initMap: () => void; } }
+declare global {
+  interface Window {
+    initMap?: () => void;
+  }
+}
 
 interface Waypoint { location: string; stopover: boolean; id: string;}
 interface ImageData { image: string; likes: number; comments: string[]; title: string; uuid: string;}
+// interface tourMap { myFolderLocation: string }
 
 const MapWithDirections: React.FC = () => {
+  const [tourMap, setTourMap] = useState('myWaypoints')
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [newWaypoint, setNewWaypoint] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
@@ -21,8 +27,12 @@ const MapWithDirections: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
   const [isAuthorizedUser, setIsAuthorizedUser] = useState(false);
-  const history = useHistory();
 
+  const [selectedButton, setSelectedButton] = useState('usa');
+
+  const handleButtonClick = (buttonId:any) => {
+    setSelectedButton(buttonId);
+  };
   useEffect(() => {
     const unsubscribeFromAuth = auth.onAuthStateChanged(user => {
       setIsLoggedIn(!!user);
@@ -47,7 +57,7 @@ const MapWithDirections: React.FC = () => {
 
   //@ts-ignore
   useEffect(() => {
-    const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
+    const q = query(collection(db, tourMap), orderBy('stopNumber'));
 
     // Real-time listener for waypoints
     const unsubscribeFromWaypoints = onSnapshot(q, (querySnapshot) => {
@@ -67,8 +77,8 @@ const MapWithDirections: React.FC = () => {
       console.error('Error listening to waypoints: ', error);
     });
 
-    return () => unsubscribeFromWaypoints;
-  }, []);
+    return () => unsubscribeFromWaypoints();
+  }, [tourMap]);
 
   useEffect(() => {
     if (waypoints.length === 0) return;
@@ -127,7 +137,7 @@ const MapWithDirections: React.FC = () => {
               setModalOpen(true);
       
               try {
-                const docRef = collection(db, 'myWaypoints');
+                const docRef = collection(db, tourMap);
                 const waypointDoc = await getDocs(query(docRef));
                 const selectedWaypoint = waypointDoc.docs.find(
                   (doc) => doc.data().address === title
@@ -149,7 +159,6 @@ const MapWithDirections: React.FC = () => {
       };
 
       // Custom icon URLs
-      // const secondToLastCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2Fmarker2.png?alt=media&token=8fd33c6e-d56f-4e42-a168-ce44e8581b58';
       const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f';
       const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
 
@@ -232,26 +241,15 @@ const MapWithDirections: React.FC = () => {
 
   }, [waypoints]);
 
-  const isLocationInUSA = (results: any) => {
-    if (!results || results.length === 0) return false;
-
-    for (let component of results[0].address_components) {
-      if (component.types.includes('country') && component.short_name === 'US') {
-        return true;
-      }
-    }
-    return false;
-  };
-
   const handleAddWaypoint = async () => {
     if (newWaypoint.trim() === '') return;
   
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ address: newWaypoint }, async (results, status) => {
       if (results) {
-        if (status === 'OK' && isLocationInUSA(results)) {
+        if (status === 'OK') {
           try {
-            const q = query(collection(db, 'myWaypoints'), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
+            const q = query(collection(db, tourMap), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
             const querySnapshot = await getDocs(q);
             const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0]?.data().stopNumber : 0;
   
@@ -272,7 +270,7 @@ const MapWithDirections: React.FC = () => {
             ]);
   
             // Add the waypoint to the database
-            await addDoc(collection(db, 'myWaypoints'), newWaypointData);
+            await addDoc(collection(db, tourMap), newWaypointData);
             
             setNewWaypoint('');
             if (autocomplete) autocomplete.getPlace();
@@ -297,10 +295,10 @@ const MapWithDirections: React.FC = () => {
           const latLng = { lat: latitude, lng: longitude };
   
           geocoder.geocode({ location: latLng }, async (results, status) => {
-            if (status === 'OK' && results && isLocationInUSA(results)) {
+            if (status === 'OK' && results ) {
               const address = results[0].formatted_address;
               try {
-                const q = query(collection(db, 'myWaypoints'), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
+                const q = query(collection(db, tourMap), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
                 const querySnapshot = await getDocs(q);
                 const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0].data().stopNumber : 0;
   
@@ -322,7 +320,7 @@ const MapWithDirections: React.FC = () => {
                   ];
                 });
   
-                await addDoc(collection(db, 'myWaypoints'), newWaypointData);
+                await addDoc(collection(db, tourMap), newWaypointData);
   
               } catch (error) {
                 console.error('Error adding waypoint: ', error);
@@ -342,9 +340,42 @@ const MapWithDirections: React.FC = () => {
     }
   };
   
+  const handleUSAMap = () => {
+    setTourMap('myWaypoints')
+  };
+
+  const handleIrelandMap = () => {
+    setTourMap('irelandWaypoints')
+  };
 
   return (
     <>
+<IonButton
+        className="mapSelectionbutton"
+        onClick={() => {
+          handleUSAMap();
+          handleButtonClick('usa');
+        }}
+        style={{
+          '--color': selectedButton === 'usa' ? ' #f7870f' : '#777777',
+          '--border-color': selectedButton === 'usa' ?  ' #f7870f' : '#777777',
+        }}
+      >
+        Microsoft Trip
+      </IonButton>
+      {isLoggedIn && isAuthorizedUser && (<IonButton
+        className="mapSelectionbutton2"
+        onClick={() => {
+          handleIrelandMap();
+          handleButtonClick('ireland');
+        }}
+        style={{
+          '--color': selectedButton === 'ireland' ? ' #f7870f' : '#777777',
+          '--border-color': selectedButton === 'ireland' ?  ' #f7870f' : '#777777',
+        }}
+      >
+        Ireland Trip
+      </IonButton>)}
       <LocationModal
         isOpen={modalOpen}
         location={modalLocation}
@@ -354,12 +385,11 @@ const MapWithDirections: React.FC = () => {
       />
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
-      <MainTimer collectionName={`startTripTimes`} documentId={'danAndUncleJohn'} />
+      { tourMap=='myWaypoints' && <MainTimer collectionName={`startTripTimes`} documentId={'danAndUncleJohn'} />}
       <div className='directionText'>
         <div>Click on Waypoints to</div>
         <div>see images and videos!</div>
       </div>
-
       {/* <TimeOnRoad collectionName={'startTripTimes'} documentId={'timeOnRoad'} /> */}
       {isLoggedIn && isAuthorizedUser && (
         <>
