@@ -93,40 +93,28 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           <IonToolbar>
             <IonButtons slot="start">
               <IonButton className="mapPageButton" onClick={onClose}>Close</IonButton>
+              {isAdmin && (<IonButton className="mapPageButton" onClick={() => fileInputRef.current?.click()}>Upload</IonButton>)}
             </IonButtons>
-            <div className='frank2'>{location ? `${location}` : 'Unknown'}
-            {isAdmin && (
-              <IonButtons>
-                <IonButton className="mapPageButton" onClick={() => fileInputRef.current?.click()}>Upload Image</IonButton>
-              </IonButtons>
-            )}
-            </div>
+            <div className='locationModalTitle'>{location ? `${location}` : 'Unknown'}</div>
           </IonToolbar>
         </IonHeader>
         <IonContent>
-        {isAdmin && (
-          <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />
-        )}
-
+        {isAdmin && (<input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />)}
           {images.length > 0 ? (
             <Swiper
-              // effect={'cube'}
               loop={true}
               grabCursor={true}
-              // cubeEffect={{ shadow: true, slideShadows: true, shadowOffset: 20, shadowScale: 0.94 }}
               pagination={true}
               modules={[Pagination]}
               className="mySwiper"
             >
               {images.map((item, index) => (
                 <div>
-
                   <SwiperSlide key={index}>
                     <div>
 
-                      {item.image ? (
-                        <img src={item.image} alt={`Image ${index + 1}`} className='frank' />
-                      ) : item.video ? (
+                      {item.image ? (<img src={item.image} alt={`Image ${index + 1}`} className='frank' />) : item.video ? 
+                      (
                         <>
                           <ReactPlayer 
                             url={item.video}

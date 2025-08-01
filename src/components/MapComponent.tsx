@@ -27,7 +27,8 @@ const MapWithDirections: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
   const [isAuthorizedUser, setIsAuthorizedUser] = useState(false);
-
+  const [destinationCustomIconUrl, setDestinationCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f');
+  const [originCustomIconUrl, setOriginCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988');
   const [selectedButton, setSelectedButton] = useState('usa');
 
   const handleButtonClick = (buttonId:any) => {
@@ -125,7 +126,7 @@ const MapWithDirections: React.FC = () => {
               markerOptions.icon = {
                 url: customIcon,
                 scaledSize: new google.maps.Size(30, 40),
-                anchor: new google.maps.Point(14, 35)
+                anchor: new google.maps.Point(14, 37)
               };
             }
       
@@ -158,9 +159,8 @@ const MapWithDirections: React.FC = () => {
         });
       };
 
+
       // Custom icon URLs
-      const destinationCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f';
-      const originCustomIconUrl = 'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988'
 
       // Change the marker icon specifically for the second-to-last waypoint
       const waypointForCustomIcon = waypoints[waypoints.length - 2];
@@ -341,10 +341,14 @@ const MapWithDirections: React.FC = () => {
   };
   
   const handleUSAMap = () => {
+    setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f');
+    setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988');
     setTourMap('myWaypoints')
   };
 
   const handleIrelandMap = () => {
+    setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb');
+    setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7');
     setTourMap('irelandWaypoints')
   };
 
