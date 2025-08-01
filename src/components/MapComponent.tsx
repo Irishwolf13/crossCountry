@@ -382,6 +382,7 @@ const MapWithDirections: React.FC = () => {
         images={modalImages}
         waypointId={selectedWaypointId}
         onClose={() => setModalOpen(false)}
+        myMap={tourMap}
       />
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 

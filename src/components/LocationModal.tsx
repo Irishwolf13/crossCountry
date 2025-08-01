@@ -11,9 +11,9 @@ import { useAuth } from '../firebase/AuthContext';
 import './LocationModal.css'
 
 interface MediaData { image?: string; video?: string; likes: number; comments: string[]; title: string; uuid: string;}
-interface LocationModalProps { isOpen: boolean; location: string; images: MediaData[]; waypointId: string | null; onClose: () => void;}
+interface LocationModalProps { isOpen: boolean; location: string; images: MediaData[]; waypointId: string | null; onClose: () => void; myMap:string}
 
-const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images: initialImages, waypointId, onClose }) => {
+const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images: initialImages, waypointId, onClose, myMap }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [images, setImages] = useState<MediaData[]>(initialImages);
   const [toastMsg, setToastMsg] = useState<string>('');
@@ -40,7 +40,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
     if (!file) return;
 
     try {
-      const result = await uploadImage(file);
+      const result = await uploadImage(file); 
       if (!result) throw new Error("Failed to get download URL");
 
       const { downloadURL, uniqueFileName } = result;
@@ -57,7 +57,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           },
         ];
         // @ts-ignore
-        await updateDocument('myWaypoints', waypointId, { images: updatedImages });
+        await updateDocument(myMap, waypointId, { images: updatedImages });
 
         setImages(updatedImages);
 

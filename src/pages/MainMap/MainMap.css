@@ -69,7 +69,7 @@
     --border-style: solid;
     --border-width: 1px;
     --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
-    width: 110px;
+    width: 112px;
     font-size: small;
     z-index: 1000;
 }
@@ -88,7 +88,7 @@
     --border-style: solid;
     --border-width: 1px;
     --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
-    width: 110px;
+    width: 112px;
     font-size: small;
     z-index: 1000;
 }
