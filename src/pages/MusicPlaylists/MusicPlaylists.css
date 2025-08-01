@@ -1,0 +1,13 @@
+.musicHolder {
+    display: flex;
+    height: 70vh;
+}
+.selectionHolder {
+    color: #f7870f;
+    margin: 10px;
+}
+
+.playlistDropdown {
+    background-color: black;
+}
+
