@@ -1,68 +1,48 @@
-import React, { useState, useRef } from 'react';
-import { IonButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import React, { useState, useEffect } from 'react';
+import { IonButton, IonContent, IonHeader, IonPage, } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../../firebase/config';
 import './Home.css';
 import '../../theme/variables.css';
 
 const Home: React.FC = () => {
   const history = useHistory();
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [volume, setVolume] = useState(0.3);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isAuthorizedUser, setIsAuthorizedUser] = useState<boolean>(false);
 
-  // Removed initial play logic
-  const goToPage = (myPage: string) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+
+      // Check if the user email matches the admin email
+      const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+      if (user && user.email === adminEmail) {
+        setIsAuthorizedUser(true); // User is authorized
+      } else {
+        setIsAuthorizedUser(false); // User is not authorized
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      history.push('/'); // Redirect to the homepage or login page after logout
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
+  };
+  
+  const goToPage = (myPage: string) => {
     history.push(`/${myPage}`);
   };
 
-  const togglePlayPause = () => {
-    if (audioRef.current) {
-      if (audioRef.current.paused) {
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      } else {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
-
-  // Retain volume and event listeners handling
-  React.useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-
-    const handleAudioEnd = () => {
-      setIsPlaying(false);
-    };
-
-    if (audioRef.current) {
-      audioRef.current.addEventListener('ended', handleAudioEnd);
-      return () => {
-        audioRef.current?.removeEventListener('ended', handleAudioEnd);
-      };
-    }
-  }, [volume]);
-
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons>
-            <IonButton onClick={() => goToPage('')} className="mapPageButton">Exit</IonButton>
-          </IonButtons>
-          <IonButtons className='volumeSpacer' slot='end'>
-            <IonButton className="mapPageButton" onClick={togglePlayPause}>
-              {isPlaying ? 'Pause' : 'Play'}
-            </IonButton>
-            <audio ref={audioRef} src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" />
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
+      <IonHeader></IonHeader>
       <IonContent>
         <div className='danUncleJohn'>
           <img 
@@ -90,6 +70,16 @@ const Home: React.FC = () => {
           <IonButton onClick={() => goToPage('musicPlaylists')} className="HomePageButton">Road Tunes</IonButton>
           <br></br>
           <IonButton onClick={() => goToPage('map')} className="HomePageButton">Tour Maps</IonButton>
+          {isLoggedIn ? (
+                  <div className='home-ButtonHolder'>
+                    {isAuthorizedUser && (
+                      <IonButton onClick={() => goToPage('dashboard')}  className="HomePageButton">Dashboard</IonButton>
+                    )}
+                    <IonButton onClick={handleLogout}  className="HomePageButton">Logout</IonButton>
+                  </div>
+                ) : (
+                  <IonButton onClick={() => goToPage('dashboard')}  className="HomePageButton">Admin Login</IonButton>
+                )}
           <br></br>
           {/* <IonButton onClick={() => goToPage('deepThoughts')} className="HomePageButton">Deep Thoughts</IonButton> */}
         </div>

@@ -35,7 +35,6 @@ import UploadPhoto from './pages/UploadPhoto/UploadPhoto';
 import MusicPlaylists from './pages/MusicPlaylists/MusicPlaylists';
 import DeepThoughts from './pages/DeepThoughts/DeepThoughts';
 import SignGuestBook from './pages/SignGuestBook/SignGuestBook';
-import Splash from './pages/Splash/Splash';
 
 setupIonicReact();
 
@@ -54,7 +53,7 @@ const App: React.FC = () => (
           <Route exact path="/home" component={Home} />
           <Route exact path="/map" component={MainMap} />
           <Route exact path="/home" component={Home} />
-          <Route exact path="/" component={Splash} />
+          <Route exact path="/" component={Home} />
         </IonRouterOutlet>
       </IonReactRouter>
     </AuthProvider>
