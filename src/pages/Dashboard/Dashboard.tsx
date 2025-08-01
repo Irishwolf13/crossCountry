@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonReorderGroup, IonReorder, useIonViewWillEnter, IonLoading, IonToast } from '@ionic/react';
+import {
+  IonButton,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonReorderGroup,
+  IonReorder,
+  useIonViewWillEnter,
+  IonLoading,
+  IonToast,
+} from '@ionic/react';
 import { useAuth } from '../../firebase/AuthContext';
 import { useHistory } from 'react-router-dom';
 import { auth, db } from '../../firebase/config';
-import { collection, query, getDocs, orderBy, doc, deleteDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  getDocs,
+  orderBy,
+  doc,
+  deleteDoc,
+  updateDoc,
+  arrayUnion,
+} from 'firebase/firestore';
 import { uploadVideo } from '../../firebase/firebaseController';
 
-// Define an interface for Waypoint
 interface Waypoint {
   id: string;
   address: string;
@@ -19,14 +42,15 @@ interface Waypoint {
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const history = useHistory();
+  const [myLocation, setMyLocation] = useState('myWaypoints');
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  
+
   useIonViewWillEnter(() => {
     fetchWaypoints();
   });
 
   const fetchWaypoints = async () => {
-    const q = query(collection(db, 'myWaypoints'), orderBy('stopNumber'));
+    const q = query(collection(db, myLocation), orderBy('stopNumber'));
     const querySnapshot = await getDocs(q);
     const waypointList = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -35,10 +59,19 @@ const Dashboard: React.FC = () => {
     setWaypoints(waypointList);
   };
 
+  const changeToIrishWaypoints = () => {
+    setMyLocation('irelandWaypoints');
+    fetchWaypoints();
+  };
+    const changeToMicrosoftWaypoints = () => {
+    setMyLocation('myWaypoints');
+    fetchWaypoints();
+  };
+
   const handleReorder = async (event: CustomEvent) => {
     const reorderedWaypoints = event.detail.complete(waypoints);
     for (let i = 0; i < reorderedWaypoints.length; i++) {
-      await updateDoc(doc(db, 'myWaypoints', reorderedWaypoints[i].id), {
+      await updateDoc(doc(db, myLocation, reorderedWaypoints[i].id), {
         stopNumber: i + 1,
       });
     }
@@ -46,7 +79,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, 'myWaypoints', id));
+    await deleteDoc(doc(db, myLocation, id));
     fetchWaypoints(); // Refresh the list after deletion
   };
 
@@ -73,25 +106,22 @@ const Dashboard: React.FC = () => {
       try {
         // @ts-ignore
         const { downloadURL, uniqueFileName } = await uploadVideo(selectedFile);
-  
-        // Create a new video object with UUID from the upload function
+
         const newVideoObject = {
           video: downloadURL,
           likes: 0,
-          title: "New Video",
-          uuid: uniqueFileName, // Use the unique file name as UUID
+          title: 'New Video',
+          uuid: uniqueFileName,
         };
-  
-        // Get the document reference
-        const waypointDocRef = doc(db, 'myWaypoints', waypointId);
-  
-        // Use the arrayUnion method for atomic updates without needing to fetch the entire document
+
+        const waypointDocRef = doc(db, myLocation, waypointId);
+
         await updateDoc(waypointDocRef, {
           images: arrayUnion(newVideoObject),
         });
-  
+
         setUploadSuccess(true);
-        fetchWaypoints(); // Refresh the waypoints to reflect changes
+        fetchWaypoints();
       } catch (error) {
         console.error('Error uploading video:', error);
         setErrorMessage('Error uploading video. Please try again.');
@@ -123,6 +153,14 @@ const Dashboard: React.FC = () => {
 
         <IonButton onClick={() => history.push('/home')}>Home Page</IonButton>
         <IonButton onClick={handleLogOut}>Admin LogOut</IonButton>
+        
+        {/* New Button to Load Irish Waypoints */}
+        <IonButton color="secondary" onClick={changeToIrishWaypoints}>
+          Load Irish Waypoints
+        </IonButton>
+        <IonButton color="secondary" onClick={changeToMicrosoftWaypoints}>
+          Microsoft Waypoints
+        </IonButton>
 
         <input type="file" onChange={handleFileChange} accept="video/*" />
         <IonList>
@@ -147,7 +185,7 @@ const Dashboard: React.FC = () => {
         <IonToast
           className='toastSuccess'
           isOpen={uploadSuccess}
-          message="Action Successful!!"
+          message="Action Successful!"
           onDidDismiss={() => setUploadSuccess(false)}
           duration={6000}
           buttons={[{ text: 'Dismiss', role: 'cancel', handler: () => {} }]}
