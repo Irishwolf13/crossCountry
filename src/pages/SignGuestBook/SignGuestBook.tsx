@@ -140,15 +140,16 @@ const SignGuestBook: React.FC = () => {
           className="home-background-image"
         />
       </div>
+      <div className='frank'>
         <IonCard className="centered-card">
           <IonInput
             value={name}
-            placeholder="Your Name"
+            placeholder="Name"
             onIonInput={(e) => setName(e.detail.value!)}
           />
           <IonInput
             value={comment}
-            placeholder="Your Comment"
+            placeholder="Let us know you were here!"
             onIonInput={(e) => setComment(e.detail.value!)}
           />
           <IonButton className="addCommentButton" onClick={handleAddComment}>Add Comment</IonButton>
@@ -203,6 +204,7 @@ const SignGuestBook: React.FC = () => {
               ))}
           </IonList>
         </div>
+      </div>
       </IonContent>
     </IonPage>
   );

@@ -68,8 +68,9 @@ const Home: React.FC = () => {
         <div className='home-ButtonHolder'>
           <IonButton onClick={() => goToPage('signGuestBook')} className="HomePageButton">Sign Guestbook</IonButton>
           <IonButton onClick={() => goToPage('musicPlaylists')} className="HomePageButton">Road Tunes</IonButton>
-          <br></br>
           <IonButton onClick={() => goToPage('map')} className="HomePageButton">Tour Maps</IonButton>
+          <br></br>
+          <br></br>
           {isLoggedIn ? (
                   <div className='home-ButtonHolder'>
                     {isAuthorizedUser && (

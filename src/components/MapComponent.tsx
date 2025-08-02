@@ -365,7 +365,7 @@ const MapWithDirections: React.FC = () => {
           '--border-color': selectedButton === 'usa' ?  ' #f7870f' : '#777777',
         }}
       >
-        Microsoft Trip
+        Microsoft
       </IonButton>
       {isLoggedIn && isAuthorizedUser && (<IonButton
         className="mapSelectionbutton2"
@@ -378,7 +378,7 @@ const MapWithDirections: React.FC = () => {
           '--border-color': selectedButton === 'ireland' ?  ' #f7870f' : '#777777',
         }}
       >
-        Ireland Trip
+        Ireland
       </IonButton>)}
       <LocationModal
         isOpen={modalOpen}
