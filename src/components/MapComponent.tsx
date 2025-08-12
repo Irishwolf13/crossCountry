@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { IonButton, useIonViewDidLeave, useIonViewWillEnter } from '@ionic/react';
+import { IonButton } from '@ionic/react';
 import { auth, db } from '../firebase/config';
 import { collection, addDoc, getDocs, orderBy, query, onSnapshot, where } from 'firebase/firestore';
 
@@ -14,10 +14,9 @@ declare global {
 
 interface Waypoint { location: string; stopover: boolean; id: string;}
 interface ImageData { image: string; likes: number; comments: string[]; title: string; uuid: string;}
-// interface tourMap { myFolderLocation: string }
 
 const MapWithDirections: React.FC = () => {
-  const [tourMap, setTourMap] = useState('myWaypoints')
+  const [tourMap, setTourMap] = useState('irelandWaypoints');
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [newWaypoint, setNewWaypoint] = useState('');
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
@@ -27,13 +26,11 @@ const MapWithDirections: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
   const [isAuthorizedUser, setIsAuthorizedUser] = useState(false);
-  const [destinationCustomIconUrl, setDestinationCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f');
-  const [originCustomIconUrl, setOriginCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988');
-  const [selectedButton, setSelectedButton] = useState('usa');
 
-  const handleButtonClick = (buttonId:any) => {
-    setSelectedButton(buttonId);
-  };
+  // Set opening destincation images, would need to change if you change from Ireland
+  const [destinationCustomIconUrl, setDestinationCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb');
+  const [originCustomIconUrl, setOriginCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7');
+    
   useEffect(() => {
     const unsubscribeFromAuth = auth.onAuthStateChanged(user => {
       setIsLoggedIn(!!user);
@@ -56,11 +53,8 @@ const MapWithDirections: React.FC = () => {
     }
   }, [modalOpen]);
 
-  //@ts-ignore
   useEffect(() => {
     const q = query(collection(db, tourMap), orderBy('stopNumber'));
-
-    // Real-time listener for waypoints
     const unsubscribeFromWaypoints = onSnapshot(q, (querySnapshot) => {
       const loadedWaypoints: Waypoint[] = [];
       
@@ -87,7 +81,6 @@ const MapWithDirections: React.FC = () => {
     const initMap = () => {
       const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
         zoom: 6,
-        // center: { lat: 41.850033, lng: -87.6500523 },
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: false,
@@ -117,9 +110,7 @@ const MapWithDirections: React.FC = () => {
               position: results[0].geometry.location,
               map: map,
               title: title,
-              // zIndex: customIcon === secondToLastCustomIconUrl ? 2000 : 1000 
               zIndex: customIcon === destinationCustomIconUrl ? 2000 : 1000 
-              // destinationCustomIconUrl
             };
       
             if (customIcon) {
@@ -143,13 +134,7 @@ const MapWithDirections: React.FC = () => {
                 const selectedWaypoint = waypointDoc.docs.find(
                   (doc) => doc.data().address === title
                 );
-                if (selectedWaypoint) {
-                  const data = selectedWaypoint.data();
-                  const imagesData: ImageData[] = data.images || [];
-                  setModalImages(imagesData);
-                } else {
-                  setModalImages([]);
-                }
+                setModalImages(selectedWaypoint ? (selectedWaypoint.data().images || []) : []);
               } catch (error) {
                 console.error('Error fetching images: ', error);
                 setModalImages([]);
@@ -159,23 +144,13 @@ const MapWithDirections: React.FC = () => {
         });
       };
 
-
-      // Custom icon URLs
-
-      // Change the marker icon specifically for the second-to-last waypoint
       const waypointForCustomIcon = waypoints[waypoints.length - 2];
-      // frank
-      // setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id, secondToLastCustomIconUrl);
+      
       setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id);
-
-      // Set custom icon for the last waypoint
       setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);
-
-      // Set custom icon for the first (origin) waypoint
       setMarkerWithImages(origin, map, origin, waypoints[0].id, originCustomIconUrl);
 
-      // Continue with other markers
-      const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2); // Exclude the second-to-last and last waypoint already processed
+      const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2);
       waypointsForMarkers.forEach(({ location, id }) => {
         setMarkerWithImages(location, map, location, id);
       });
@@ -253,7 +228,6 @@ const MapWithDirections: React.FC = () => {
             const querySnapshot = await getDocs(q);
             const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0]?.data().stopNumber : 0;
   
-            // Construct the new waypoint
             const newWaypointData = {
               latitude: results[0].geometry.location.lat(),
               longitude: results[0].geometry.location.lng(),
@@ -262,19 +236,17 @@ const MapWithDirections: React.FC = () => {
               images: []
             };
   
-            // Update local state first
-            setWaypoints((prevWaypoints) => [
+            setWaypoints((prevWaypoints) => [ 
               ...prevWaypoints.slice(0, -1),
               { location: newWaypoint, stopover: true, id: '' },
-              prevWaypoints[prevWaypoints.length - 1]
+              prevWaypoints[prevWaypoints.length - 1],
             ]);
-  
-            // Add the waypoint to the database
+
             await addDoc(collection(db, tourMap), newWaypointData);
             
             setNewWaypoint('');
             if (autocomplete) autocomplete.getPlace();
-  
+
           } catch (error) {
             console.error('Error adding waypoint: ', error);
           }
@@ -290,38 +262,36 @@ const MapWithDirections: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-  
+
           const geocoder = new window.google.maps.Geocoder();
           const latLng = { lat: latitude, lng: longitude };
-  
+
           geocoder.geocode({ location: latLng }, async (results, status) => {
-            if (status === 'OK' && results ) {
+            if (status === 'OK' && results) {
               const address = results[0].formatted_address;
               try {
                 const q = query(collection(db, tourMap), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
                 const querySnapshot = await getDocs(q);
                 const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0].data().stopNumber : 0;
-  
+
                 const newWaypointData = {
                   latitude,
                   longitude,
                   address,
                   stopNumber: highestStopNumber + 1,
-                  images: []
+                  images: [],
                 };
-  
-                // Add the new waypoint at the second last position
+
                 setWaypoints((prevWaypoints) => {
                   const waypointsWithoutLast = prevWaypoints.slice(0, -1);
                   return [
                     ...waypointsWithoutLast,
                     { location: address, stopover: true, id: '' },
-                    prevWaypoints[prevWaypoints.length - 1] // Preserve the last destination
+                    prevWaypoints[prevWaypoints.length - 1],
                   ];
                 });
-  
+
                 await addDoc(collection(db, tourMap), newWaypointData);
-  
               } catch (error) {
                 console.error('Error adding waypoint: ', error);
               }
@@ -339,47 +309,42 @@ const MapWithDirections: React.FC = () => {
       alert('Geolocation is not supported by your browser.');
     }
   };
-  
+
   const handleUSAMap = () => {
     setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f');
     setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988');
-    setTourMap('myWaypoints')
+    setTourMap('myWaypoints');
   };
 
   const handleIrelandMap = () => {
     setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb');
     setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7');
-    setTourMap('irelandWaypoints')
+    setTourMap('irelandWaypoints');
   };
 
   return (
     <>
-<IonButton
+      <IonButton
         className="mapSelectionbutton"
-        onClick={() => {
-          handleUSAMap();
-          handleButtonClick('usa');
-        }}
+        onClick={handleUSAMap}
         style={{
-          '--color': selectedButton === 'usa' ? ' #f7870f' : '#777777',
-          '--border-color': selectedButton === 'usa' ?  ' #f7870f' : '#777777',
+          '--color': tourMap === 'myWaypoints' ? '#f7870f' : '#777777',
+          '--border-color': tourMap === 'myWaypoints' ? '#f7870f' : '#777777',
         }}
       >
         Microsoft
       </IonButton>
-      {isLoggedIn && isAuthorizedUser && (<IonButton
+      <IonButton
         className="mapSelectionbutton2"
-        onClick={() => {
-          handleIrelandMap();
-          handleButtonClick('ireland');
-        }}
+        onClick={handleIrelandMap}
         style={{
-          '--color': selectedButton === 'ireland' ? ' #f7870f' : '#777777',
-          '--border-color': selectedButton === 'ireland' ?  ' #f7870f' : '#777777',
+          '--color': tourMap === 'irelandWaypoints' ? '#f7870f' : '#777777',
+          '--border-color': tourMap === 'irelandWaypoints' ? '#f7870f' : '#777777',
         }}
       >
         Ireland
-      </IonButton>)}
+      </IonButton>
+
       <LocationModal
         isOpen={modalOpen}
         location={modalLocation}
@@ -388,14 +353,16 @@ const MapWithDirections: React.FC = () => {
         onClose={() => setModalOpen(false)}
         myMap={tourMap}
       />
+      
       <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
-      { tourMap=='myWaypoints' && <MainTimer collectionName={`startTripTimes`} documentId={'danAndUncleJohn'} />}
-      <div className='directionText'>
+      {tourMap === 'myWaypoints' && <MainTimer collectionName="startTripTimes" documentId="danAndUncleJohn" />}
+
+      <div className="directionText">
         <div>Click on Waypoints to</div>
         <div>see images and videos!</div>
       </div>
-      {/* <TimeOnRoad collectionName={'startTripTimes'} documentId={'timeOnRoad'} /> */}
+
       {isLoggedIn && isAuthorizedUser && (
         <>
           <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
@@ -414,4 +381,3 @@ const MapWithDirections: React.FC = () => {
 };
 
 export default MapWithDirections;
-
