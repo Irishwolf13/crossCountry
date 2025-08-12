@@ -1,14 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { IonModal, IonContent, IonHeader, IonToolbar, IonButton, IonToast, IonButtons } from '@ionic/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { EffectCube, Pagination } from 'swiper/modules';
+import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/bundle';
 import { uploadImage, updateDocument } from '../firebase/firebaseController';
 import ReactPlayer from 'react-player';
 import { useAuth } from '../firebase/AuthContext';
-import './LocationModal.css'
+// Import necessary styles
+import './LocationModal.css';
 
 interface MediaData { image?: string; video?: string; likes: number; comments: string[]; title: string; uuid: string;}
 interface LocationModalProps { isOpen: boolean; location: string; images: MediaData[]; waypointId: string | null; onClose: () => void; myMap:string}
@@ -20,6 +21,9 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
   const [videoPlayingStates, setVideoPlayingStates] = useState<{ [key: number]: boolean }>({});
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // To manage the position and visibility of the custom context menu
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean, x: number, y: number, imageUrl?: string }>({ visible: false, x: 0, y: 0 });
 
   useEffect(() => {
     if (isOpen) {
@@ -86,6 +90,28 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
     }));
   };
 
+  // Function to show context menu on right-click
+  const showContextMenu = (event: React.MouseEvent, imageUrl: string) => {
+    event.preventDefault(); // Prevent default context menu
+    setContextMenu({
+      visible: true,
+      x: event.pageX,
+      y: event.pageY,
+      imageUrl
+    });
+  };
+
+  // Function to handle download
+  const downloadImage = (url: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'downloaded_image.jpg'; // or any other desired file name or extension
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setContextMenu({ ...contextMenu, visible: false }); // Close context menu after downloading
+  };
+
   return (
     <>
       <IonModal isOpen={isOpen} onDidDismiss={onClose} className="fullScreenModal">
@@ -99,7 +125,7 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           </IonToolbar>
         </IonHeader>
         <IonContent>
-        {isAdmin && (<input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />)}
+          {isAdmin && (<input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileChange} />)}
           {images.length > 0 ? (
             <Swiper
               loop={true}
@@ -109,12 +135,12 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
               className="mySwiper"
             >
               {images.map((item, index) => (
-                <div>
-                  <SwiperSlide key={index}>
+                <div key={index}>
+                  <SwiperSlide>
                     <div>
-
-                      {item.image ? (<img src={item.image} alt={`Image ${index + 1}`} className='frank' />) : item.video ? 
-                      (
+                      {item.image ? (
+                        <img src={item.image} alt={`Image ${index + 1}`} className='frank' onContextMenu={(e) => showContextMenu(e, item.image)} />
+                      ) : item.video ? (
                         <>
                           <ReactPlayer 
                             url={item.video}
@@ -140,6 +166,25 @@ const LocationModal: React.FC<LocationModalProps> = ({ isOpen, location, images:
           <div className='centerTitle'>Swipe left or right to view more!</div>
         </IonContent>
       </IonModal>
+
+      {/* Custom Context Menu */}
+      {contextMenu.visible && (
+        <div 
+          className="custom-context-menu" 
+          style={{ 
+            top: `${contextMenu.y}px`, 
+            left: `${contextMenu.x}px`, 
+            position: 'absolute', 
+            backgroundColor: 'white', 
+            border: '1px solid #ccc', 
+            boxShadow: '0 2px 8px rgba(0,0,0,0.26)',
+            zIndex: 1000
+          }}
+        >
+          <button onClick={() => contextMenu.imageUrl && downloadImage(contextMenu.imageUrl)}>Download</button>
+        </div>
+      )}
+
       <IonToast isOpen={!!toastMsg} onDidDismiss={() => setToastMsg('')} message={toastMsg} duration={2000} position="top"/>
     </>
   );
