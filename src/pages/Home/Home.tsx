@@ -44,12 +44,6 @@ const Home: React.FC = () => {
     <IonPage>
       <IonHeader></IonHeader>
       <IonContent>
-        <div className='danUncleJohn'>
-          <img 
-            src='https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FdanUncleJohn.png?alt=media&token=6fcb4820-8d4e-402e-9b87-62e487ca88dc'
-            alt='Dan and Uncle John'
-          />
-        </div>
         <div className="home-container">
           <img 
             src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FCrossCountrySplashEmpty.jpg?alt=media&token=c033784a-c12c-40cd-af44-549edde0dc60" 
@@ -58,6 +52,12 @@ const Home: React.FC = () => {
           />
         </div>
         <div className="wrapper">
+            <div className='danUncleJohn'>
+              <img 
+                src='https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FdanUncleJohn.png?alt=media&token=6fcb4820-8d4e-402e-9b87-62e487ca88dc'
+                alt='Dan and Uncle John'
+              />
+            </div>
           <div className="hackTheHighwaySign">
             <img
               src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FHackTheHighway.png?alt=media&token=d1ae4112-a37b-4ba6-a04a-916d662270f1"
@@ -67,8 +67,8 @@ const Home: React.FC = () => {
         </div>
         <div className='home-ButtonHolder'>
           <IonButton onClick={() => goToPage('signGuestBook')} className="HomePageButton">Sign Guestbook</IonButton>
-          <IonButton onClick={() => goToPage('musicPlaylists')} className="HomePageButton">Road Tunes</IonButton>
           <IonButton onClick={() => goToPage('map')} className="HomePageButton">Tour Maps</IonButton>
+          <IonButton onClick={() => goToPage('musicPlaylists')} className="HomePageButton">Road Tunes</IonButton>
           <br></br>
           <br></br>
           {isLoggedIn ? (

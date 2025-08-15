@@ -40,9 +40,23 @@
     width: 70%;
 }
 
+.wrapper {
+    display: flex;
+    justify-content: center;
+}
+
 .danUncleJohn {
     position: absolute;
     width: 100px;
-    margin: 5px;
     z-index: 9999;
+    left: 10px;
+}
+
+@media screen and (min-width: 900px) {
+    .danUncleJohn {
+        width: 250px; /* Adjust the width as needed */
+    }
+    .HomePageButton {
+        width: 30%;
+    }
 }
