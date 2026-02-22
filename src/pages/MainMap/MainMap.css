@@ -1,94 +1,79 @@
-.volumeSpacer {
-    margin-right: 10px;
+.map-audio-controls {
+  margin-right: 10px;
 }
 
-.overlay-image {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    max-height: 10vh; /* Set maximum height */
-    width: auto;       /* Maintain aspect ratio by allowing automatic width calculation */
-    z-index: 1;        /* Ensure the image appears above the map */
+.map-overlay-logo {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  max-height: 10vh;
+  width: auto;
+  z-index: 1;
 }
 
-.overlay-danJohn {
-    position: absolute;
-    top: 66vh;
-    left: 65px;
-    max-height: 7vh;
-    width: auto;     
-    z-index: 10;      
+.map-overlay-characters {
+  position: absolute;
+  top: 66vh;
+  left: 65px;
+  max-height: 7vh;
+  width: auto;
+  z-index: 10;
 }
 
-.overlay-car {
-    position: absolute;
-    top: 63vh;
-    left: 0px;
-    max-height: 10vh;
-    width: auto;     
-    z-index: 1;      
+.map-overlay-car {
+  position: absolute;
+  top: 63vh;
+  left: 0;
+  max-height: 10vh;
+  width: auto;
+  z-index: 1;
 }
 
-.button-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-.bottom-button {
-    margin-top: auto;
-}
-.mapPageButton {
-    --background: #000;
-    --background-hover: #ffce72;
-    --background-activated: #ffce72;
-    --background-focused: #ffce72;
-    --color: #f7870f;
-    --border-radius: 10px;
-    --border-color: #f7870f;
-    --border-style: solid;
-    --border-width: 1px;
-    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
-    --padding-top: 10px;
-    --padding-bottom: 10px;
-    margin-right: auto;
-    margin-left: auto;
-    width: 100px;
+.map-tour-btn {
+  position: absolute;
+  z-index: 1000;
+  left: 5px;
+  --background: var(--color-surface);
+  --background-hover: var(--color-primary-hover);
+  --background-activated: var(--color-primary-hover);
+  --background-focused: var(--color-primary-hover);
+  --border-radius: 10px;
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 1);
+  width: 112px;
+  font-size: small;
 }
 
-.mapSelectionbutton {
-    position: absolute;
-    left:5px;
-    top:2px;
-    --background: #000;
-    --background-hover: #ffce72;
-    --background-activated: #ffce72;
-    --background-focused: #ffce72;
-    --color: #f7870f;
-    --border-radius: 10px;
-    --border-color: #f7870f;
-    --border-style: solid;
-    --border-width: 1px;
-    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
-    width: 112px;
-    font-size: small;
-    z-index: 1000;
+.map-tour-btn-1 {
+  top: 2px;
 }
 
-.mapSelectionbutton2 {
-    position: absolute;
-    left:5px;
-    top:50px;
-    --background: #000;
-    --background-hover: #ffce72;
-    --background-activated: #ffce72;
-    --background-focused: #ffce72;
-    --color: #f7870f;
-    --border-radius: 10px;
-    --border-color: #f7870f;
-    --border-style: solid;
-    --border-width: 1px;
-    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
-    width: 112px;
-    font-size: small;
-    z-index: 1000;
+.map-tour-btn-2 {
+  top: 50px;
+}
+
+.map-hint {
+  position: absolute;
+  right: 10px;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+}
+
+.map-admin-controls {
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.map-location-input {
+  padding: 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  flex: 1;
+  min-width: 200px;
 }

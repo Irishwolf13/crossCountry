@@ -1,349 +1,285 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  DirectionsRenderer,
+  Autocomplete,
+} from '@react-google-maps/api';
 import { IonButton } from '@ionic/react';
-import { auth, db } from '../firebase/config';
-import { collection, addDoc, getDocs, orderBy, query, onSnapshot, where } from 'firebase/firestore';
-
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { useAuth } from '../firebase/AuthContext';
+import { subscribeToWaypoints } from '../firebase/firebaseController';
+import type { Waypoint, MediaItem } from '../firebase/types';
 import LocationModal from './LocationModal';
-import MainTimer from '../components/MainTimer';
+import MainTimer from './MainTimer';
+import LoadingSpinner from './LoadingSpinner';
 
-declare global {
-  interface Window {
-    initMap?: () => void;
-  }
+const LIBRARIES: ('places')[] = ['places'];
+
+const MAP_OPTIONS: google.maps.MapOptions = {
+  mapTypeControl: false,
+  streetViewControl: false,
+  fullscreenControl: false,
+};
+
+const MAP_CONTAINER_STYLE = {
+  width: '100%',
+  height: '70vh',
+  border: '5px solid #FFA500',
+};
+
+interface TourConfig {
+  collection: string;
+  label: string;
+  originIcon: string;
+  destinationIcon: string;
 }
 
-interface Waypoint { location: string; stopover: boolean; id: string;}
-interface ImageData { image: string; likes: number; comments: string[]; title: string; uuid: string;}
+const TOURS: Record<string, TourConfig> = {
+  ireland: {
+    collection: 'irelandWaypoints',
+    label: 'Ireland',
+    originIcon:
+      'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7',
+    destinationIcon:
+      'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb',
+  },
+  usa: {
+    collection: 'myWaypoints',
+    label: 'Microsoft',
+    originIcon:
+      'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988',
+    destinationIcon:
+      'https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f',
+  },
+};
+
+// Check if lat/lng is valid (not 0,0 or missing)
+const hasValidCoords = (wp: Waypoint): boolean =>
+  typeof wp.latitude === 'number' &&
+  typeof wp.longitude === 'number' &&
+  !(wp.latitude === 0 && wp.longitude === 0);
+
+// Geocode a single address and return lat/lng
+const geocodeAddress = (
+  geocoder: google.maps.Geocoder,
+  address: string
+): Promise<{ lat: number; lng: number } | null> =>
+  new Promise((resolve) => {
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === 'OK' && results?.[0]) {
+        const loc = results[0].geometry.location;
+        resolve({ lat: loc.lat(), lng: loc.lng() });
+      } else {
+        resolve(null);
+      }
+    });
+  });
 
 const MapWithDirections: React.FC = () => {
-  const [tourMap, setTourMap] = useState('irelandWaypoints');
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const { isAdmin } = useAuth();
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_DEV_GOOGLE_KEY,
+    libraries: LIBRARIES,
+  });
+
+  const [activeTour, setActiveTour] = useState<string>('ireland');
+  const [rawWaypoints, setRawWaypoints] = useState<Waypoint[]>([]);
+  const [resolvedWaypoints, setResolvedWaypoints] = useState<Waypoint[]>([]);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [newWaypoint, setNewWaypoint] = useState('');
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLocation, setModalLocation] = useState('');
-  const [modalImages, setModalImages] = useState<ImageData[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [modalImages, setModalImages] = useState<MediaItem[]>([]);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
-  const [isAuthorizedUser, setIsAuthorizedUser] = useState(false);
 
-  // Set opening destincation images, would need to change if you change from Ireland
-  const [destinationCustomIconUrl, setDestinationCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb');
-  const [originCustomIconUrl, setOriginCustomIconUrl] = useState('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7');
-    
+  const tour = TOURS[activeTour];
+
+  // Subscribe to waypoints from Firestore
   useEffect(() => {
-    const unsubscribeFromAuth = auth.onAuthStateChanged(user => {
-      setIsLoggedIn(!!user);
+    const unsubscribe = subscribeToWaypoints(tour.collection, setRawWaypoints);
+    return () => unsubscribe();
+  }, [tour.collection]);
 
-      // Check if the user email is the authorized one
-      const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
-      if (user && user.email === adminEmail) {
-        setIsAuthorizedUser(true); // User is authorized
-      } else {
-        setIsAuthorizedUser(false); // User is not authorized
+  // Resolve any waypoints with missing/invalid lat/lng by geocoding their address
+  useEffect(() => {
+    if (!isLoaded || rawWaypoints.length === 0) {
+      setResolvedWaypoints([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveCoords = async () => {
+      const geocoder = new google.maps.Geocoder();
+      const resolved = await Promise.all(
+        rawWaypoints.map(async (wp) => {
+          if (hasValidCoords(wp)) return wp;
+
+          const coords = await geocodeAddress(geocoder, wp.address);
+          if (!coords) return wp;
+
+          return { ...wp, latitude: coords.lat, longitude: coords.lng };
+        })
+      );
+
+      if (!cancelled) {
+        setResolvedWaypoints(resolved.filter(hasValidCoords));
       }
-    });
+    };
 
-    return () => unsubscribeFromAuth();
+    resolveCoords();
+    return () => { cancelled = true; };
+  }, [rawWaypoints, isLoaded]);
+
+  // Calculate directions when resolved waypoints change
+  useEffect(() => {
+    if (!isLoaded || resolvedWaypoints.length < 2) {
+      setDirections(null);
+      return;
+    }
+
+    const origin = resolvedWaypoints[0].address;
+    const destination = resolvedWaypoints[resolvedWaypoints.length - 1].address;
+
+    const intermediateWaypoints = resolvedWaypoints.slice(1, -1).map((wp) => ({
+      location: wp.address,
+      stopover: true,
+    }));
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin,
+        destination,
+        waypoints: intermediateWaypoints,
+        travelMode: google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          setDirections(result);
+        } else {
+          console.error('Directions request failed:', status);
+        }
+      }
+    );
+  }, [resolvedWaypoints, isLoaded]);
+
+  const handleMarkerClick = useCallback((wp: Waypoint) => {
+    setModalLocation(wp.address);
+    setSelectedWaypointId(wp.id);
+    setModalImages(wp.images || []);
+    setModalOpen(true);
   }, []);
 
-  useEffect(() => {
-    if (!modalOpen) {
-      setModalImages([]);
+  const getMarkerIcon = (index: number, total: number): google.maps.Icon | undefined => {
+    const size = new google.maps.Size(30, 40);
+    const anchor = new google.maps.Point(14, 37);
+
+    if (index === 0) {
+      return { url: tour.originIcon, scaledSize: size, anchor };
     }
-  }, [modalOpen]);
-
-  useEffect(() => {
-    const q = query(collection(db, tourMap), orderBy('stopNumber'));
-    const unsubscribeFromWaypoints = onSnapshot(q, (querySnapshot) => {
-      const loadedWaypoints: Waypoint[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        loadedWaypoints.push({
-          location: data.address,
-          stopover: true,
-          id: doc.id,
-        });
-      });
-
-      setWaypoints(loadedWaypoints);
-    }, (error) => {
-      console.error('Error listening to waypoints: ', error);
-    });
-
-    return () => unsubscribeFromWaypoints();
-  }, [tourMap]);
-
-  useEffect(() => {
-    if (waypoints.length === 0) return;
-
-    const initMap = () => {
-      const map = new window.google.maps.Map(document.getElementById('map') as HTMLElement, {
-        zoom: 6,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-      });
-
-      const directionsService = new window.google.maps.DirectionsService();
-      const directionsRenderer = new window.google.maps.DirectionsRenderer({
-        suppressMarkers: true
-      });
-      directionsRenderer.setMap(map);
-
-      const origin = waypoints[0]?.location || '';
-      const destination = waypoints[waypoints.length - 1]?.location || '';
-
-      const geocoder = new window.google.maps.Geocoder();
-
-      const setMarkerWithImages = (
-        location: any,
-        map: any,
-        title: string,
-        id: string,
-        customIcon?: string
-      ) => {
-        geocoder.geocode({ address: location }, async (results, status) => {
-          if (status === 'OK' && results) {
-            const markerOptions: google.maps.MarkerOptions = {
-              position: results[0].geometry.location,
-              map: map,
-              title: title,
-              zIndex: customIcon === destinationCustomIconUrl ? 2000 : 1000 
-            };
-      
-            if (customIcon) {
-              markerOptions.icon = {
-                url: customIcon,
-                scaledSize: new google.maps.Size(30, 40),
-                anchor: new google.maps.Point(14, 37)
-              };
-            }
-      
-            const marker = new window.google.maps.Marker(markerOptions);
-      
-            marker.addListener('click', async () => {
-              setModalLocation(title);
-              setSelectedWaypointId(id);
-              setModalOpen(true);
-      
-              try {
-                const docRef = collection(db, tourMap);
-                const waypointDoc = await getDocs(query(docRef));
-                const selectedWaypoint = waypointDoc.docs.find(
-                  (doc) => doc.data().address === title
-                );
-                setModalImages(selectedWaypoint ? (selectedWaypoint.data().images || []) : []);
-              } catch (error) {
-                console.error('Error fetching images: ', error);
-                setModalImages([]);
-              }
-            });
-          }
-        });
-      };
-
-      const waypointForCustomIcon = waypoints[waypoints.length - 2];
-      
-      setMarkerWithImages(waypointForCustomIcon.location, map, waypointForCustomIcon.location, waypointForCustomIcon.id);
-      setMarkerWithImages(destination, map, destination, waypoints[waypoints.length - 1].id, destinationCustomIconUrl);
-      setMarkerWithImages(origin, map, origin, waypoints[0].id, originCustomIconUrl);
-
-      const waypointsForMarkers = waypoints.slice(1, waypoints.length - 2);
-      waypointsForMarkers.forEach(({ location, id }) => {
-        setMarkerWithImages(location, map, location, id);
-      });
-
-      const waypointsForDirections = waypoints.slice(1, waypoints.length - 1).map(({ location }) => ({ location, stopover: true }));
-
-      const request: google.maps.DirectionsRequest = {
-        origin: origin,
-        destination: destination,
-        travelMode: google.maps.TravelMode.DRIVING,
-        waypoints: waypointsForDirections,
-      };
-
-      directionsService.route(request, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK && result) {
-          directionsRenderer.setDirections(result);
-        } else {
-          console.error('Directions request failed due to ' + status);
-        }
-      });
-    };
-
-    const initAutocomplete = () => {
-      const autocompleteInput = document.getElementById('autocomplete-input') as HTMLInputElement;
-      if (autocompleteInput) {
-        const autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteInput);
-        setAutocomplete(autocompleteInstance);
-    
-        autocompleteInstance.addListener('place_changed', () => {
-          const place = autocompleteInstance.getPlace();
-          if (place.formatted_address) {
-            setNewWaypoint(place.formatted_address);
-          }
-        });
-      } else {
-        console.warn("Autocomplete input element is not available.");
-      }
-    };
-    
-    const loadGoogleMapsScript = () => {
-      const existingScript = document.getElementById('google-maps');
-      if (!existingScript) {
-        const apiKey = import.meta.env.VITE_DEV_GOOGLE_KEY;
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
-        script.id = 'google-maps';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          initMap();
-          initAutocomplete();
-        };
-        document.body.appendChild(script);
-      } else {
-        if (window.google && window.google.maps) {
-          initMap();
-          initAutocomplete();
-        }
-      }
-    };
-
-    loadGoogleMapsScript();
-
-  }, [waypoints]);
+    if (index === total - 1) {
+      return { url: tour.destinationIcon, scaledSize: size, anchor };
+    }
+    return undefined;
+  };
 
   const handleAddWaypoint = async () => {
-    if (newWaypoint.trim() === '') return;
-  
-    const geocoder = new window.google.maps.Geocoder();
+    if (!newWaypoint.trim() || !isLoaded) return;
+
+    const geocoder = new google.maps.Geocoder();
     geocoder.geocode({ address: newWaypoint }, async (results, status) => {
-      if (results) {
-        if (status === 'OK') {
-          try {
-            const q = query(collection(db, tourMap), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
-            const querySnapshot = await getDocs(q);
-            const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0]?.data().stopNumber : 0;
-  
-            const newWaypointData = {
-              latitude: results[0].geometry.location.lat(),
-              longitude: results[0].geometry.location.lng(),
-              address: newWaypoint,
-              stopNumber: highestStopNumber + 1,
-              images: []
-            };
-  
-            setWaypoints((prevWaypoints) => [ 
-              ...prevWaypoints.slice(0, -1),
-              { location: newWaypoint, stopover: true, id: '' },
-              prevWaypoints[prevWaypoints.length - 1],
-            ]);
-
-            await addDoc(collection(db, tourMap), newWaypointData);
-            
-            setNewWaypoint('');
-            if (autocomplete) autocomplete.getPlace();
-
-          } catch (error) {
-            console.error('Error adding waypoint: ', error);
-          }
-        } else {
-          alert('The entered location is not within the USA.');
-        }
+      if (status !== 'OK' || !results?.[0]) {
+        alert('Could not find that location.');
+        return;
       }
+
+      const location = results[0].geometry.location;
+      const highestStop = rawWaypoints.reduce((max, wp) => Math.max(max, wp.stopNumber), 0);
+
+      await addDoc(collection(db, tour.collection), {
+        latitude: location.lat(),
+        longitude: location.lng(),
+        address: newWaypoint,
+        stopNumber: highestStop + 1,
+        images: [],
+      });
+
+      setNewWaypoint('');
     });
   };
 
   const handleAddCurrentLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-
-          const geocoder = new window.google.maps.Geocoder();
-          const latLng = { lat: latitude, lng: longitude };
-
-          geocoder.geocode({ location: latLng }, async (results, status) => {
-            if (status === 'OK' && results) {
-              const address = results[0].formatted_address;
-              try {
-                const q = query(collection(db, tourMap), where('stopNumber', '<', 9999), orderBy('stopNumber', 'desc'));
-                const querySnapshot = await getDocs(q);
-                const highestStopNumber = querySnapshot.docs.length ? querySnapshot.docs[0].data().stopNumber : 0;
-
-                const newWaypointData = {
-                  latitude,
-                  longitude,
-                  address,
-                  stopNumber: highestStopNumber + 1,
-                  images: [],
-                };
-
-                setWaypoints((prevWaypoints) => {
-                  const waypointsWithoutLast = prevWaypoints.slice(0, -1);
-                  return [
-                    ...waypointsWithoutLast,
-                    { location: address, stopover: true, id: '' },
-                    prevWaypoints[prevWaypoints.length - 1],
-                  ];
-                });
-
-                await addDoc(collection(db, tourMap), newWaypointData);
-              } catch (error) {
-                console.error('Error adding waypoint: ', error);
-              }
-            } else {
-              alert('The current location is not within the USA.');
-            }
-          });
-        },
-        (error) => {
-          alert('Unable to retrieve your location. Please check your device settings.');
-          console.error('Geolocation error:', error);
-        }
-      );
-    } else {
+    if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const geocoder = new google.maps.Geocoder();
+
+        geocoder.geocode({ location: { lat: latitude, lng: longitude } }, async (results, status) => {
+          if (status !== 'OK' || !results?.[0]) {
+            alert('Could not determine your address.');
+            return;
+          }
+
+          const highestStop = rawWaypoints.reduce((max, wp) => Math.max(max, wp.stopNumber), 0);
+
+          await addDoc(collection(db, tour.collection), {
+            latitude,
+            longitude,
+            address: results[0].formatted_address,
+            stopNumber: highestStop + 1,
+            images: [],
+          });
+        });
+      },
+      () => alert('Unable to retrieve your location. Check your device settings.')
+    );
+  };
+
+  const onAutocompleteLoad = (ac: google.maps.places.Autocomplete) => {
+    autocompleteRef.current = ac;
+  };
+
+  const onPlaceChanged = () => {
+    const place = autocompleteRef.current?.getPlace();
+    if (place?.formatted_address) {
+      setNewWaypoint(place.formatted_address);
     }
   };
 
-  const handleUSAMap = () => {
-    setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerMicrosoft.png?alt=media&token=c1abd52a-4fbb-44bd-b6d2-c81fac36484f');
-    setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerRIT.png?alt=media&token=4f542b7b-bd56-415c-996c-3c742f097988');
-    setTourMap('myWaypoints');
-  };
+  if (!isLoaded) return <LoadingSpinner />;
 
-  const handleIrelandMap = () => {
-    setDestinationCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerClover.png?alt=media&token=4bbefd8d-99ee-4689-9f6d-9eb4e2b400eb');
-    setOriginCustomIconUrl('https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FmarkerIrishFlag.png?alt=media&token=e6d12f55-675a-4e7a-a77b-592bb0e621d7');
-    setTourMap('irelandWaypoints');
-  };
+  const center = resolvedWaypoints.length > 0
+    ? { lat: resolvedWaypoints[0].latitude, lng: resolvedWaypoints[0].longitude }
+    : { lat: 40, lng: -74 };
 
   return (
     <>
-      <IonButton
-        className="mapSelectionbutton"
-        onClick={handleUSAMap}
-        style={{
-          '--color': tourMap === 'myWaypoints' ? '#f7870f' : '#777777',
-          '--border-color': tourMap === 'myWaypoints' ? '#f7870f' : '#777777',
-        }}
-      >
-        Microsoft
-      </IonButton>
-      <IonButton
-        className="mapSelectionbutton2"
-        onClick={handleIrelandMap}
-        style={{
-          '--color': tourMap === 'irelandWaypoints' ? '#f7870f' : '#777777',
-          '--border-color': tourMap === 'irelandWaypoints' ? '#f7870f' : '#777777',
-        }}
-      >
-        Ireland
-      </IonButton>
+      {/* Tour selector buttons */}
+      {Object.entries(TOURS).map(([key, config]) => (
+        <IonButton
+          key={key}
+          className={key === 'usa' ? 'map-tour-btn map-tour-btn-1' : 'map-tour-btn map-tour-btn-2'}
+          onClick={() => setActiveTour(key)}
+          style={{
+            '--color': activeTour === key ? '#f7870f' : '#777',
+            '--border-color': activeTour === key ? '#f7870f' : '#777',
+          }}
+        >
+          {config.label}
+        </IonButton>
+      ))}
 
       <LocationModal
         isOpen={modalOpen}
@@ -351,30 +287,61 @@ const MapWithDirections: React.FC = () => {
         images={modalImages}
         waypointId={selectedWaypointId}
         onClose={() => setModalOpen(false)}
-        myMap={tourMap}
+        collectionName={tour.collection}
       />
-      
-      <div id="map" style={{ width: '100%', height: '70vh', border: '5px solid #FFA500', marginTop: '0vh' }}></div>
 
-      {tourMap === 'myWaypoints' && <MainTimer collectionName="startTripTimes" documentId="danAndUncleJohn" />}
+      <GoogleMap
+        mapContainerStyle={MAP_CONTAINER_STYLE}
+        zoom={6}
+        center={center}
+        options={MAP_OPTIONS}
+      >
+        {directions && (
+          <DirectionsRenderer
+            directions={directions}
+            options={{ suppressMarkers: true }}
+          />
+        )}
 
-      <div className="directionText">
+        {resolvedWaypoints.map((wp, index) => (
+          <Marker
+            key={wp.id}
+            position={{ lat: wp.latitude, lng: wp.longitude }}
+            title={wp.address}
+            icon={getMarkerIcon(index, resolvedWaypoints.length)}
+            zIndex={index === 0 || index === resolvedWaypoints.length - 1 ? 2000 : 1000}
+            onClick={() => handleMarkerClick(wp)}
+          />
+        ))}
+      </GoogleMap>
+
+      {activeTour === 'usa' && (
+        <MainTimer collectionName="startTripTimes" documentId="danAndUncleJohn" />
+      )}
+
+      <div className="map-hint">
         <div>Click on Waypoints to</div>
         <div>see images and videos!</div>
       </div>
 
-      {isLoggedIn && isAuthorizedUser && (
-        <>
-          <IonButton onClick={handleAddWaypoint}>Add Waypoint</IonButton>
-          <IonButton onClick={handleAddCurrentLocation}>Add Current Location</IonButton>
-          <input 
-            id="autocomplete-input"
-            type="text"
-            placeholder="Enter a location"
-            value={newWaypoint}
-            onChange={(e) => setNewWaypoint(e.target.value)}
-          />
-        </>
+      {isAdmin && (
+        <div className="map-admin-controls">
+          <Autocomplete onLoad={onAutocompleteLoad} onPlaceChanged={onPlaceChanged}>
+            <input
+              type="text"
+              placeholder="Enter a location"
+              value={newWaypoint}
+              onChange={(e) => setNewWaypoint(e.target.value)}
+              className="map-location-input"
+            />
+          </Autocomplete>
+          <IonButton className="btn-primary" onClick={handleAddWaypoint}>
+            Add Waypoint
+          </IonButton>
+          <IonButton className="btn-primary" onClick={handleAddCurrentLocation}>
+            Add Current Location
+          </IonButton>
+        </div>
       )}
     </>
   );

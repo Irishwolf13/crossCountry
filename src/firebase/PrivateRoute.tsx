@@ -1,7 +1,6 @@
-// PrivateRoute.tsx
-
 import React from 'react';
 import { Route, Redirect, RouteProps } from 'react-router-dom';
+import { IonLoading } from '@ionic/react';
 import { useAuth } from './AuthContext';
 
 interface PrivateRouteProps extends RouteProps {
@@ -9,14 +8,16 @@ interface PrivateRouteProps extends RouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ component: Component, ...rest }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   return (
     <Route
-    {...rest}
-    render={(props) =>
-        user ? <Component {...props} /> : <Redirect to="/login" />
-    }
+      {...rest}
+      render={(props) => {
+        if (loading) return <IonLoading isOpen message="Loading..." />;
+        if (!user) return <Redirect to="/login" />;
+        return <Component {...props} />;
+      }}
     />
   );
 };

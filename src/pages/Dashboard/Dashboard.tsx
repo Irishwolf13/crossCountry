@@ -17,121 +17,92 @@ import {
 } from '@ionic/react';
 import { useAuth } from '../../firebase/AuthContext';
 import { useHistory } from 'react-router-dom';
-import { auth, db } from '../../firebase/config';
+import { auth } from '../../firebase/config';
 import {
-  collection,
-  query,
-  getDocs,
-  orderBy,
-  doc,
-  deleteDoc,
-  updateDoc,
-  arrayUnion,
-} from 'firebase/firestore';
-import { uploadVideo } from '../../firebase/firebaseController';
+  subscribeToWaypoints,
+  deleteWaypoint,
+  updateWaypointStopNumber,
+  updateWaypointMedia,
+  uploadMedia,
+} from '../../firebase/firebaseController';
+import type { Waypoint, MediaItem } from '../../firebase/types';
 
-interface Waypoint {
-  id: string;
-  address: string;
-  stopNumber: number;
-  images: [];
-  latitude: number;
-  longitude: number;
-}
+const COLLECTIONS = {
+  usa: 'myWaypoints',
+  ireland: 'irelandWaypoints',
+} as const;
+
+type CollectionKey = keyof typeof COLLECTIONS;
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const history = useHistory();
-  const [myLocation, setMyLocation] = useState('myWaypoints');
+
+  const [activeCollection, setActiveCollection] = useState<CollectionKey>('usa');
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const collectionName = COLLECTIONS[activeCollection];
 
   useIonViewWillEnter(() => {
-    fetchWaypoints();
+    const unsubscribe = subscribeToWaypoints(collectionName, setWaypoints);
+    return () => unsubscribe();
   });
 
-  const fetchWaypoints = async () => {
-    const q = query(collection(db, myLocation), orderBy('stopNumber'));
-    const querySnapshot = await getDocs(q);
-    const waypointList = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Waypoint[];
-    setWaypoints(waypointList);
-  };
-
-  const changeToIrishWaypoints = () => {
-    setMyLocation('irelandWaypoints');
-    fetchWaypoints();
-  };
-    const changeToMicrosoftWaypoints = () => {
-    setMyLocation('myWaypoints');
-    fetchWaypoints();
+  const handleCollectionChange = (key: CollectionKey) => {
+    setActiveCollection(key);
+    subscribeToWaypoints(COLLECTIONS[key], setWaypoints);
   };
 
   const handleReorder = async (event: CustomEvent) => {
-    const reorderedWaypoints = event.detail.complete(waypoints);
-    for (let i = 0; i < reorderedWaypoints.length; i++) {
-      await updateDoc(doc(db, myLocation, reorderedWaypoints[i].id), {
-        stopNumber: i + 1,
-      });
+    const reordered: Waypoint[] = event.detail.complete(waypoints);
+    setWaypoints(reordered);
+
+    try {
+      await Promise.all(
+        reordered.map((wp, i) => updateWaypointStopNumber(collectionName, wp.id, i + 1))
+      );
+    } catch {
+      setToast({ message: 'Failed to reorder waypoints.', type: 'error' });
     }
-    setWaypoints(reorderedWaypoints);
   };
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, myLocation, id));
-    fetchWaypoints(); // Refresh the list after deletion
-  };
-
-  const handleLogOut = () => {
-    auth.signOut();
-    history.push('/login');
-  };
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
-  const [uploadFailed, setUploadFailed] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+    try {
+      await deleteWaypoint(collectionName, id);
+      setToast({ message: 'Waypoint deleted.', type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to delete waypoint.', type: 'error' });
     }
   };
 
-  const handleVideoUploadForWaypoint = async (waypointId: string) => {
-    if (selectedFile) {
-      setIsLoading(true);
-      try {
-        // @ts-ignore
-        const { downloadURL, uniqueFileName } = await uploadVideo(selectedFile);
+  const handleVideoUpload = async (waypointId: string) => {
+    if (!selectedFile) {
+      setToast({ message: 'Select a video first.', type: 'error' });
+      return;
+    }
 
-        const newVideoObject = {
-          video: downloadURL,
-          likes: 0,
-          title: 'New Video',
-          uuid: uniqueFileName,
-        };
+    setIsLoading(true);
+    try {
+      const { downloadURL, uniqueFileName } = await uploadMedia(selectedFile, 'videos');
+      const waypoint = waypoints.find((wp) => wp.id === waypointId);
+      if (!waypoint) throw new Error('Waypoint not found');
 
-        const waypointDocRef = doc(db, myLocation, waypointId);
+      const newMedia: MediaItem = {
+        video: downloadURL,
+        likes: 0,
+        title: 'New Video',
+        uuid: uniqueFileName,
+      };
 
-        await updateDoc(waypointDocRef, {
-          images: arrayUnion(newVideoObject),
-        });
-
-        setUploadSuccess(true);
-        fetchWaypoints();
-      } catch (error) {
-        console.error('Error uploading video:', error);
-        setErrorMessage('Error uploading video. Please try again.');
-        setUploadFailed(true);
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setErrorMessage('You must select a video to upload');
-      setUploadFailed(true);
+      await updateWaypointMedia(collectionName, waypointId, [...(waypoint.images || []), newMedia]);
+      setToast({ message: 'Video uploaded!', type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to upload video.', type: 'error' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -143,37 +114,44 @@ const Dashboard: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Dashboard</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+        {user && <p style={{ padding: '0 16px' }}>{user.email}</p>}
 
-        {user ? <p>{user.email || 'User'}</p> : <p>Please log in to see your username.</p>}
+        <div style={{ padding: '0 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <IonButton className="btn-nav" onClick={() => history.push('/home')}>Home</IonButton>
+          <IonButton className="btn-nav" onClick={() => { auth.signOut(); history.push('/login'); }}>
+            Logout
+          </IonButton>
+          <IonButton
+            className="btn-primary"
+            color={activeCollection === 'ireland' ? 'medium' : undefined}
+            onClick={() => handleCollectionChange('usa')}
+          >
+            USA Waypoints
+          </IonButton>
+          <IonButton
+            className="btn-primary"
+            color={activeCollection === 'usa' ? 'medium' : undefined}
+            onClick={() => handleCollectionChange('ireland')}
+          >
+            Ireland Waypoints
+          </IonButton>
+        </div>
 
-        <IonButton onClick={() => history.push('/home')}>Home Page</IonButton>
-        <IonButton onClick={handleLogOut}>Admin LogOut</IonButton>
-        
-        {/* New Button to Load Irish Waypoints */}
-        <IonButton color="secondary" onClick={changeToIrishWaypoints}>
-          Load Irish Waypoints
-        </IonButton>
-        <IonButton color="secondary" onClick={changeToMicrosoftWaypoints}>
-          Microsoft Waypoints
-        </IonButton>
+        <div style={{ padding: '8px 16px' }}>
+          <input type="file" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} accept="video/*" />
+        </div>
 
-        <input type="file" onChange={handleFileChange} accept="video/*" />
         <IonList>
           <IonReorderGroup disabled={false} onIonItemReorder={handleReorder}>
-            {waypoints.map((waypoint, index) => (
-              <IonItem key={waypoint.id}>
+            {waypoints.map((wp, index) => (
+              <IonItem key={wp.id}>
                 <IonLabel>
-                  {index + 1}. {waypoint.address}
+                  {index + 1}. {wp.address}
                 </IonLabel>
-                <IonButton slot="end" color="primary" onClick={() => handleVideoUploadForWaypoint(waypoint.id)}>
+                <IonButton slot="end" className="btn-primary" onClick={() => handleVideoUpload(wp.id)}>
                   Upload Video
                 </IonButton>
-                <IonButton slot="end" color="danger" onClick={() => handleDelete(waypoint.id)}>
+                <IonButton slot="end" color="danger" onClick={() => handleDelete(wp.id)}>
                   Delete
                 </IonButton>
                 <IonReorder slot="end" />
@@ -181,23 +159,16 @@ const Dashboard: React.FC = () => {
             ))}
           </IonReorderGroup>
         </IonList>
-        <IonLoading isOpen={isLoading} message="Uploading..." onDidDismiss={() => setIsLoading(false)} />
+
+        <IonLoading isOpen={isLoading} message="Uploading..." />
+
         <IonToast
-          className='toastSuccess'
-          isOpen={uploadSuccess}
-          message="Action Successful!"
-          onDidDismiss={() => setUploadSuccess(false)}
-          duration={6000}
-          buttons={[{ text: 'Dismiss', role: 'cancel', handler: () => {} }]}
-        />
-        
-        <IonToast
-          className='toastFail'
-          isOpen={uploadFailed}
-          message={errorMessage}
-          onDidDismiss={() => setUploadFailed(false)}
-          duration={3000}
-          buttons={[{ text: 'Dismiss', role: 'cancel', handler: () => {} }]}
+          className={toast?.type === 'success' ? 'toastSuccess' : 'toastFail'}
+          isOpen={!!toast}
+          message={toast?.message ?? ''}
+          onDidDismiss={() => setToast(null)}
+          duration={4000}
+          buttons={[{ text: 'Dismiss', role: 'cancel' }]}
         />
       </IonContent>
     </IonPage>

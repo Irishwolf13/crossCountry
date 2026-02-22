@@ -1,26 +1,22 @@
-.tripTimer {
-    position: absolute;
-    z-index: 9999;
-    top: 67vh;
-    right: 2px;
-    color: #000000;
-    background-color: #ffa500;
-    border-radius: 5px; /* Optional: adds rounded corners */
-    padding: 1px;
-    padding-left:5px;
-    padding-right: 5px;
+.trip-timer {
+  position: absolute;
+  z-index: 100;
+  top: 67vh;
+  right: 2px;
+  color: var(--color-surface);
+  background-color: var(--color-primary-dark);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 0.85rem;
 }
 
-.adminButton {
-    margin-right: 2px;
-    padding: 2px;
+.trip-timer-controls {
+  display: flex;
+  gap: 4px;
 }
 
-.directionText {
-    position: absolute;
-    right: 10px;
-}
-.directionText2 {
-    position: absolute;
-    right: 10px;
+.trip-timer-btn {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
 }

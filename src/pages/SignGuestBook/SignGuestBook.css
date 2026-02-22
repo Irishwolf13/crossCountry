@@ -1,64 +1,56 @@
-.centered-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    width: 90%;
+.guestbook-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.addCommentButton {
-    --background: #f7870f;
-    --background-hover: #ffce72;
-    --background-activated: #ffce72;
-    --background-focused: #ffce72;
-    --color: #000;
-    --border-radius: 10px;
-    --border-color: #000;
-    --border-style: solid;
-    --border-width: 1px;
-    --box-shadow: 0 4px 6px 0 rgb(0, 0, 0, 1);
+.guestbook-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  width: 90%;
 }
 
-.commentListHolder {
-    display: flex;
-    margin-left: 20px;
-    margin-right: 20px;
-    height: 65vh;
-    overflow-y:scroll;
-    flex-direction: column;
+.guestbook-list-container {
+  display: flex;
+  margin: 0 20px;
+  height: 65vh;
+  overflow-y: auto;
+  flex-direction: column;
+  width: calc(100% - 40px);
 }
 
-.commentList {
-    width: 100%;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
+.guestbook-list {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
-.commentItem {
-    width: 96%;
+.guestbook-item {
+  width: 96%;
 }
 
-.frank {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+.guestbook-comment {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.titleHolder {
-    margin-top: 20px;
-    color: #f7870f;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: black;
-    border-radius: 10px;
+.guestbook-comment-text {
+  display: block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  color: var(--color-primary);
+}
+
+.guestbook-date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 @media screen and (min-width: 750px) {
-    .centered-card {
-        width: 40%;
-        height: 40vh;
-    }
+  .guestbook-form {
+    width: 40%;
+  }
 }

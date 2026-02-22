@@ -11,6 +11,7 @@ import {
   IonItem,
   IonCard,
   IonButtons,
+  IonToast,
 } from '@ionic/react';
 import {
   addGuestComment,
@@ -19,192 +20,144 @@ import {
 } from '../../firebase/firebaseController';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../firebase/AuthContext';
+import type { GuestComment } from '../../firebase/types';
 import './SignGuestBook.css';
+
+const PROFANE_WORDS = [
+  'fuck', 'shit', 'nazi', 'slut', 'whore',
+  'cunt', 'bitch', 'asshole', 'ass-hole', 'kkk',
+];
+
+const containsProfanity = (text: string): boolean =>
+  PROFANE_WORDS.some((word) => text.toLowerCase().includes(word));
 
 const SignGuestBook: React.FC = () => {
   const history = useHistory();
-  const { user } = useAuth();
-  const [name, setName] = useState<string>('');
-  const [comment, setComment] = useState<string>('');
-  const [comments, setComments] = useState<
-    Array<{ id: string; name: string; comment: string; createdAt: Date | null }>
-  >([]);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [profanityWarning, setProfanityWarning] = useState<string>('');
+  const { isAdmin } = useAuth();
+  const [name, setName] = useState('');
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState<GuestComment[]>([]);
+  const [warning, setWarning] = useState('');
 
   useEffect(() => {
-    const loadComments = async () => {
-      try {
-        const commentsData = await fetchGuestComments();
-        setComments(
-          commentsData as Array<{
-            id: string;
-            name: string;
-            comment: string;
-            createdAt: Date | null;
-          }>
-        );
-      } catch (error) {
-        console.error('Error loading comments:', error);
-      }
-    };
-
     loadComments();
+  }, []);
 
-    const adminEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
-    if (user && user.email === adminEmail) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
+  const loadComments = async () => {
+    try {
+      const data = await fetchGuestComments();
+      setComments(data);
+    } catch (error) {
+      console.error('Error loading comments:', error);
     }
-  }, [user]);
+  };
 
   const handleAddComment = async () => {
-    if (name && comment) {
-      // Perform profanity check
-      const hasProfanity = containsProfanity(name) || containsProfanity(comment);
+    if (!name.trim() || !comment.trim()) return;
 
-      if (hasProfanity) {
-        setProfanityWarning("Let's try and keep it clean");
-        return;
-      }
+    if (containsProfanity(name) || containsProfanity(comment)) {
+      setWarning("Let's try and keep it clean");
+      return;
+    }
 
-      try {
-        await addGuestComment(name, comment);
-        const commentsData = await fetchGuestComments();
-        setComments(
-          commentsData as Array<{
-            id: string;
-            name: string;
-            comment: string;
-            createdAt: Date | null;
-          }>
-        );
-        setName('');
-        setComment('');
-        setProfanityWarning(''); // Clear warning after successful addition
-      } catch (error) {
-        console.error('Error adding comment:', error);
-      }
+    try {
+      await addGuestComment(name.trim(), comment.trim());
+      await loadComments();
+      setName('');
+      setComment('');
+      setWarning('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
 
-  const containsProfanity = (text:string) => {
-    const profaneWords = [
-      'fuck',
-      'shit',
-      'nazi',
-      'slut',
-      'whore',
-      'cunt',
-      'bitch',
-      'asshole',
-      'ass-hole',
-      'kkk',
-      'trump',
-    ];
-
-    return profaneWords.some((word) => text.toLowerCase().includes(word));
-  };
-
-  const handleDeleteComment = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
       await deleteGuestComment(id);
-      setComments(comments.filter((comment) => comment.id !== id));
+      setComments((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
   };
 
-  const goToHome = () => {
-    history.push('/home');
-  };
+  const sortedComments = [...comments].sort((a, b) => {
+    if (!a.createdAt || !b.createdAt) return 0;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons>
-            <IonButton className="mapPageButton" onClick={goToHome}>
+          <IonButtons slot="start">
+            <IonButton className="btn-nav" onClick={() => history.push('/home')}>
               Home
             </IonButton>
-            <IonTitle style={{color: '#f7870f'}}>Sign the Guest Book</IonTitle>
           </IonButtons>
+          <IonTitle style={{ color: 'var(--color-primary)' }}>Sign the Guest Book</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
-      <div className="home-container">
-        <img 
-          src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FbackdropSky2.jpg?alt=media&token=c21edae9-5e3a-4d67-8b1c-2b5cb058d304" 
-          alt="Background" 
-          className="home-background-image"
-        />
-      </div>
-      <div className='frank'>
-        <IonCard className="centered-card">
-          <IonInput
-            value={name}
-            placeholder="Name"
-            onIonInput={(e) => setName(e.detail.value!)}
+        <div className="page-background">
+          <img
+            src="https://firebasestorage.googleapis.com/v0/b/crosscountry-98fb7.firebasestorage.app/o/website%2FbackdropSky2.jpg?alt=media&token=c21edae9-5e3a-4d67-8b1c-2b5cb058d304"
+            alt="Background"
           />
-          <IonInput
-            value={comment}
-            placeholder="Let us know you were here!"
-            onIonInput={(e) => setComment(e.detail.value!)}
-          />
-          <IonButton className="addCommentButton" onClick={handleAddComment}>Add Comment</IonButton>
-          {profanityWarning && (
-            <div style={{ color: 'red', marginTop: '10px' }}>
-              {profanityWarning}
-            </div>
-          )}
-        </IonCard>
-        <div className='commentListHolder'>
-          <IonList className='commentList'>
-            {comments
-              .slice()
-              //@ts-ignore
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-              .map(({ id, name, comment, createdAt }) => (
-                <IonItem key={id} className='commentItem'>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                    }}
-                  >
-                    <span style={{ 
-                      display: 'block', 
-                      whiteSpace: 'pre-wrap',
-                      wordWrap: 'break-word', 
-                      wordBreak: 'break-word',
-                      color: '#f7870f'
-                    }}>
+        </div>
+
+        <div className="guestbook-content">
+          <IonCard className="guestbook-form">
+            <IonInput
+              value={name}
+              placeholder="Name"
+              onIonInput={(e) => setName(e.detail.value ?? '')}
+            />
+            <IonInput
+              value={comment}
+              placeholder="Let us know you were here!"
+              onIonInput={(e) => setComment(e.detail.value ?? '')}
+            />
+            <IonButton className="btn-primary" onClick={handleAddComment}>
+              Add Comment
+            </IonButton>
+          </IonCard>
+
+          <div className="guestbook-list-container">
+            <IonList className="guestbook-list">
+              {sortedComments.map(({ id, name, comment, createdAt }) => (
+                <IonItem key={id} className="guestbook-item">
+                  <div className="guestbook-comment">
+                    <span className="guestbook-comment-text">
                       <strong>{name}:</strong> {comment}
                       {createdAt && (
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                        <div className="guestbook-date">
                           {new Intl.DateTimeFormat('en-US', {
                             dateStyle: 'medium',
                             timeStyle: 'short',
-                          }).format(new Date(createdAt))}
+                          }).format(createdAt)}
                         </div>
                       )}
                     </span>
                     {isAdmin && (
-                      <IonButton
-                        color="danger"
-                        onClick={() => handleDeleteComment(id)}
-                      >
+                      <IonButton color="danger" onClick={() => handleDelete(id)}>
                         Delete
                       </IonButton>
                     )}
                   </div>
                 </IonItem>
               ))}
-          </IonList>
+            </IonList>
+          </div>
         </div>
-      </div>
+
+        <IonToast
+          className="toastFail"
+          isOpen={!!warning}
+          message={warning}
+          onDidDismiss={() => setWarning('')}
+          duration={3000}
+          position="top"
+        />
       </IonContent>
     </IonPage>
   );

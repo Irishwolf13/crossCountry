@@ -1,40 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { IonPage, IonButton, IonButtons, IonContent, IonHeader, IonInput, IonTitle, IonToolbar, IonBackButton } from '@ionic/react';
+import React, { useState } from 'react';
+import {
+  IonPage,
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonInput,
+  IonTitle,
+  IonToolbar,
+  IonToast,
+} from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebase/config';
+import './Login.css';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const history = useHistory();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        // Clear the input fields when the user logs out
-        setEmail('');
-        setPassword('');
-      }
-    });
-
-    return () => {
-      // Unsubscribe from the onAuthStateChanged listener
-      unsubscribe();
-    };
-  }, []);
-
   const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       history.push('/home');
-    } catch (error) {
-      console.error('Error logging in:', error);
+    } catch (err: any) {
+      const message =
+        err?.code === 'auth/invalid-credential'
+          ? 'Invalid email or password.'
+          : err?.code === 'auth/too-many-requests'
+          ? 'Too many attempts. Please try again later.'
+          : 'Login failed. Please try again.';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const goToHome = () => {
-    history.push('/');
   };
 
   return (
@@ -42,27 +52,48 @@ const Login: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonButton className="mapPageButton" onClick={goToHome}>Cancel</IonButton>
+            <IonButton className="btn-nav" onClick={() => history.push('/')}>
+              Cancel
+            </IonButton>
           </IonButtons>
           <IonTitle>Admin Login</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <IonInput
-          value={email}
-          placeholder="Email"
-          onIonInput={(e) => setEmail(e.detail.value!)}
-          type="email"
-          required
+        <div className="login-form">
+          <IonInput
+            value={email}
+            placeholder="Email"
+            onIonInput={(e) => setEmail(e.detail.value ?? '')}
+            type="email"
+            required
+            className="login-input"
+          />
+          <IonInput
+            value={password}
+            placeholder="Password"
+            onIonInput={(e) => setPassword(e.detail.value ?? '')}
+            type="password"
+            required
+            className="login-input"
+          />
+          <IonButton
+            className="btn-primary login-submit"
+            onClick={handleLogin}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Signing in...' : 'Admin Login'}
+          </IonButton>
+        </div>
+
+        <IonToast
+          className="toastFail"
+          isOpen={!!error}
+          message={error}
+          onDidDismiss={() => setError('')}
+          duration={4000}
+          position="top"
         />
-        <IonInput
-          value={password}
-          placeholder="Password"
-          onIonInput={(e) => setPassword(e.detail.value!)}
-          type="password"
-          required
-        />
-        <IonButton className="addCommentButton" onClick={handleLogin}>Admin Login</IonButton>
       </IonContent>
     </IonPage>
   );
